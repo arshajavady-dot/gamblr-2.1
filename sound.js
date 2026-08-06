@@ -6,6 +6,29 @@ class SoundEngine {
   constructor() {
     this.audioCtx = null;
     this.isMuted = false;
+    this.bgAudio = new Audio('bg-music.mp3.mp3');
+    this.bgAudio.loop = true;
+    this.bgAudio.volume = 0.35;
+
+    // Try playing immediately on load
+    this.tryPlay();
+
+    // Attach global unlock listeners for ANY click, tap, or key press anywhere on the screen
+    const unlock = () => {
+      this.init();
+    };
+    window.addEventListener('click', unlock);
+    window.addEventListener('keydown', unlock);
+    window.addEventListener('pointerdown', unlock);
+    window.addEventListener('touchstart', unlock);
+  }
+
+  tryPlay() {
+    if (!this.isMuted && this.bgAudio.paused) {
+      this.bgAudio.play().catch(() => {
+        // Autoplay policy blocked; will unlock on first user click/touch
+      });
+    }
   }
 
   init() {
@@ -18,10 +41,17 @@ class SoundEngine {
     if (this.audioCtx && this.audioCtx.state === 'suspended') {
       this.audioCtx.resume();
     }
+    
+    this.tryPlay();
   }
 
   toggleMute() {
     this.isMuted = !this.isMuted;
+    if (this.isMuted) {
+      this.bgAudio.pause();
+    } else {
+      this.bgAudio.play().catch(() => {});
+    }
     return this.isMuted;
   }
 
@@ -307,11 +337,88 @@ class SoundEngine {
     gain.gain.setValueAtTime(0.3, this.audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.1);
     
-    osc.connect(gain);
-    gain.connect(this.audioCtx.destination);
-    
     osc.start();
     osc.stop(this.audioCtx.currentTime + 0.1);
+  }
+
+  playMineGem(count = 1) {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.audioCtx) return;
+
+    const now = this.audioCtx.currentTime;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(500 + count * 60, now);
+    osc.frequency.exponentialRampToValueAtTime(1200 + count * 80, now + 0.15);
+
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.15);
+  }
+
+  playMineExplosion() {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.audioCtx) return;
+
+    const now = this.audioCtx.currentTime;
+
+    // Noise explosion
+    const bufferSize = this.audioCtx.sampleRate * 0.4;
+    const buffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const noise = this.audioCtx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = this.audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(800, now);
+    filter.frequency.exponentialRampToValueAtTime(80, now + 0.4);
+
+    const gain = this.audioCtx.createGain();
+    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.audioCtx.destination);
+
+    noise.start(now);
+  }
+
+  playPegBounce() {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.audioCtx) return;
+
+    const now = this.audioCtx.currentTime;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800 + Math.random() * 300, now);
+    osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
+
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.04);
   }
 }
 

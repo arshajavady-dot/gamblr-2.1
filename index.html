@@ -107,6 +107,29 @@
           </svg>
           <span>Higher or Lower</span>
         </button>
+
+        <button id="tab-mines" class="nav-btn" role="tab" aria-selected="false" aria-controls="view-mines" onclick="switchTab('mines')">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="8"/>
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+          </svg>
+          <span>Mines</span>
+        </button>
+
+        <button id="tab-plinko" class="nav-btn" role="tab" aria-selected="false" aria-controls="view-plinko" onclick="switchTab('plinko')">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 22 22 22"/>
+          </svg>
+          <span>Plinko</span>
+        </button>
+
+        <button id="tab-race" class="nav-btn" role="tab" aria-selected="false" aria-controls="view-race" onclick="switchTab('race')">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+            <line x1="4" y1="22" x2="4" y2="15"/>
+          </svg>
+          <span>Animal Racing</span>
+        </button>
       </nav>
       <input type="range" class="nav-slider" id="nav-slider" min="0" max="100" value="0">
     </div>
@@ -191,6 +214,24 @@
             <span class="home-icon">🃏</span>
             <h3>Higher or Lower</h3>
             <p>Guess if the next card drawn is higher or lower.</p>
+          </div>
+
+          <div class="game-card home-card" onclick="switchTab('mines')">
+            <span class="home-icon">💣</span>
+            <h3>Mines</h3>
+            <p>Uncover safe tiles on a 5x5 grid without hitting bombs.</p>
+          </div>
+
+          <div class="game-card home-card" onclick="switchTab('plinko')">
+            <span class="home-icon">🪙</span>
+            <h3>Plinko</h3>
+            <p>Drop balls down a peg board to hit high multiplier slots.</p>
+          </div>
+
+          <div class="game-card home-card" onclick="switchTab('race')">
+            <span class="home-icon">🏎️</span>
+            <h3>Animal Racing</h3>
+            <p>Pick your racer and watch a live simulated track race.</p>
           </div>
 
         </div>
@@ -846,7 +887,205 @@
         </div>
       </section>
 
-    </main>
+      <!-- MINES VIEW -->
+      <section id="view-mines" class="view-panel mines-panel">
+        <div class="card-glass">
+          <div class="card-header">
+            <span class="badge" style="background: rgba(0, 230, 118, 0.1); color: #00e676; border-color: rgba(0, 230, 118, 0.3);">MINESWEEPER CASINO</span>
+            <div class="card-actions">
+              <button class="icon-btn" aria-label="Settings">⚙️</button>
+            </div>
+          </div>
+
+          <div class="mines-info-bar">
+            <div class="mines-select-box">
+              <label for="mines-bomb-count">Mines Count:</label>
+              <select id="mines-bomb-count" class="mines-dropdown">
+                <option value="1">1 Bomb 💣</option>
+                <option value="3" selected>3 Bombs 💣</option>
+                <option value="5">5 Bombs 💣</option>
+                <option value="8">8 Bombs 💣</option>
+                <option value="10">10 Bombs 💣</option>
+              </select>
+            </div>
+            <div class="mines-mult-box">
+              <span class="mult-label">Multiplier:</span>
+              <span class="mult-val" id="mines-multiplier">1.00x</span>
+            </div>
+          </div>
+          
+          <div class="mines-grid" id="mines-grid">
+            <!-- 5x5 Tiles injected by JS -->
+          </div>
+          
+          <div class="mines-controls">
+            <div id="mines-result-banner" class="result-banner">
+              <span id="mines-result-text" class="result-text">PICK A TILE</span>
+            </div>
+            
+            <button id="btn-mines-start" class="btn-primary" style="background: linear-gradient(135deg, #00e676, #00b359); box-shadow: 0 0 24px rgba(0, 230, 118, 0.4);">
+              START MINES GAME
+            </button>
+            
+            <button id="btn-mines-cashout" class="btn-primary" style="display: none; background: linear-gradient(135deg, #ffd700, #ffaa00); box-shadow: 0 0 24px rgba(255, 215, 0, 0.4);">
+              CASH OUT (<span id="mines-profit">1.00x</span>)
+            </button>
+          </div>
+        </div>
+
+        <div class="card-glass stats-sidebar">
+          <div class="stats-header">
+            <h3 class="stats-title">MINES STATS</h3>
+            <button class="btn-reset" id="btn-reset-mines-stats">Reset</button>
+          </div>
+          
+          <div class="stats-grid">
+            <div class="stat-box">
+              <span class="stat-value" id="stat-mines-games">0</span>
+              <span class="stat-label">Games</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-value" id="stat-mines-wins">0</span>
+              <span class="stat-label">Cashouts</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-value" id="stat-mines-losses">0</span>
+              <span class="stat-label">Booms</span>
+            </div>
+          </div>
+
+          <div class="history-list-container">
+            <div class="history-header">
+              <h4>Recent Games</h4>
+            </div>
+            <div class="history-list" id="mines-history-list">
+              <span class="empty-msg">No games played</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PLINKO VIEW -->
+      <section id="view-plinko" class="view-panel plinko-panel">
+        <div class="card-glass">
+          <div class="card-header">
+            <span class="badge" style="background: rgba(255, 170, 0, 0.1); color: #ffaa00; border-color: rgba(255, 170, 0, 0.3);">PEG BOARD DROPS</span>
+            <div class="card-actions">
+              <button class="icon-btn" aria-label="Settings">⚙️</button>
+            </div>
+          </div>
+          
+          <div class="plinko-stage">
+            <canvas id="plinko-canvas" width="400" height="380"></canvas>
+          </div>
+          
+          <div class="plinko-controls">
+            <div id="plinko-result-banner" class="result-banner">
+              <span id="plinko-result-text" class="result-text">DROP A BALL</span>
+            </div>
+            <div class="plinko-buttons">
+              <button id="btn-plinko-drop" class="btn-primary" style="background: linear-gradient(135deg, #ffaa00, #cc8800); box-shadow: 0 0 24px rgba(255, 170, 0, 0.4);">
+                DROP BALL 🪙
+              </button>
+              <button id="btn-plinko-drop5" class="btn-secondary" style="padding: 16px 24px; font-weight: 800;">
+                DROP 5x 🔥
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-glass stats-sidebar">
+          <div class="stats-header">
+            <h3 class="stats-title">PLINKO STATS</h3>
+            <button class="btn-reset" id="btn-reset-plinko-stats">Reset</button>
+          </div>
+          
+          <div class="stats-grid">
+            <div class="stat-box">
+              <span class="stat-value" id="stat-plinko-drops">0</span>
+              <span class="stat-label">Total Drops</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-value" id="stat-plinko-best">0x</span>
+              <span class="stat-label">Best Win</span>
+            </div>
+          </div>
+
+          <div class="history-list-container">
+            <div class="history-header">
+              <h4>Recent Drops</h4>
+            </div>
+            <div class="history-list" id="plinko-history-list">
+              <span class="empty-msg">No drops yet</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ANIMAL RACING VIEW -->
+      <section id="view-race" class="view-panel race-panel">
+        <div class="card-glass">
+          <div class="card-header">
+            <span class="badge" style="background: rgba(0, 180, 216, 0.1); color: #00b4d8; border-color: rgba(0, 180, 216, 0.3);">TRACK SIMULATOR</span>
+            <div class="card-actions">
+              <button class="icon-btn" aria-label="Settings">⚙️</button>
+            </div>
+          </div>
+
+          <div class="race-picker-bar" id="race-picker">
+            <span class="picker-label">Pick Your Racer:</span>
+            <button class="pick-btn active" data-racer="turtle">🐢 Turtle</button>
+            <button class="pick-btn" data-racer="snail">🐌 Snail</button>
+            <button class="pick-btn" data-racer="rabbit">🐇 Rabbit</button>
+            <button class="pick-btn" data-racer="cheetah">🐆 Cheetah</button>
+          </div>
+          
+          <div class="race-stage">
+            <canvas id="race-canvas" width="500" height="240"></canvas>
+          </div>
+          
+          <div class="race-controls">
+            <div id="race-result-banner" class="result-banner">
+              <span id="race-result-text" class="result-text">READY TO RACE</span>
+              <span id="race-commentary" class="subtitle" style="font-style: italic; color: #a0a0a0;">Pick your animal and start the derby</span>
+            </div>
+            <button id="btn-race-start" class="btn-primary" style="background: linear-gradient(135deg, #00b4d8, #0077b6); box-shadow: 0 0 24px rgba(0, 180, 216, 0.4);">
+              START DERBY RACE 🏎️
+            </button>
+          </div>
+        </div>
+
+        <div class="card-glass stats-sidebar">
+          <div class="stats-header">
+            <h3 class="stats-title">RACE STATS</h3>
+            <button class="btn-reset" id="btn-reset-race-stats">Reset</button>
+          </div>
+          
+          <div class="stats-grid">
+            <div class="stat-box">
+              <span class="stat-value" id="stat-race-total">0</span>
+              <span class="stat-label">Total Races</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-value" id="stat-race-wins">0</span>
+              <span class="stat-label">Wins</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-value" id="stat-race-winrate">0%</span>
+              <span class="stat-label">Win Rate</span>
+            </div>
+          </div>
+
+          <div class="history-list-container">
+            <div class="history-header">
+              <h4>Race History</h4>
+            </div>
+            <div class="history-list" id="race-history-list">
+              <span class="empty-msg">No races yet</span>
+            </div>
+          </div>
+        </div>
+      </section>
 
     <footer class="app-footer">
       <p>gamblr • High-Stakes Decision Engine • Built with HTML5 & Web Audio</p>
@@ -884,6 +1123,9 @@
   <script src="cookie.js"></script>
   <script src="rps.js"></script>
   <script src="cards.js"></script>
+  <script src="mines.js"></script>
+  <script src="plinko.js"></script>
+  <script src="race.js"></script>
   <script src="ad_manager.js"></script>
   <script src="app.js"></script>
 </body>

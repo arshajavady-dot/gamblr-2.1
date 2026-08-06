@@ -13,6 +13,9 @@ function switchTab(target) {
     cookie: document.getElementById('tab-cookie'),
     rps: document.getElementById('tab-rps'),
     cards: document.getElementById('tab-cards'),
+    mines: document.getElementById('tab-mines'),
+    plinko: document.getElementById('tab-plinko'),
+    race: document.getElementById('tab-race'),
   };
   const views = {
     coin: document.getElementById('view-coin'),
@@ -24,6 +27,9 @@ function switchTab(target) {
     cookie: document.getElementById('view-cookie'),
     rps: document.getElementById('view-rps'),
     cards: document.getElementById('view-cards'),
+    mines: document.getElementById('view-mines'),
+    plinko: document.getElementById('view-plinko'),
+    race: document.getElementById('view-race'),
     home: document.getElementById('view-home'),
   };
 
@@ -53,6 +59,7 @@ function switchTab(target) {
 window.switchTab = switchTab;
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (window.soundEngine) window.soundEngine.init();
   if (window.coinFlipManager) window.coinFlipManager.init();
   if (window.magic8BallManager) window.magic8BallManager.init();
   if (window.spinWheelManager) window.spinWheelManager.init();
@@ -62,6 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.cookieManager) window.cookieManager.init();
   if (window.rpsManager) window.rpsManager.init();
   if (window.cardsManager) window.cardsManager.init();
+  if (window.minesManager) window.minesManager.init();
+  if (window.plinkoManager) window.plinkoManager.init();
+  if (window.raceManager) window.raceManager.init();
   if (window.adManager) window.adManager.init();
 
   const tabCoin = document.getElementById('tab-coin');
@@ -73,6 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabCookie = document.getElementById('tab-cookie');
   const tabRps = document.getElementById('tab-rps');
   const tabCards = document.getElementById('tab-cards');
+  const tabMines = document.getElementById('tab-mines');
+  const tabPlinko = document.getElementById('tab-plinko');
+  const tabRace = document.getElementById('tab-race');
 
   if (tabCoin) tabCoin.addEventListener('click', () => switchTab('coin'));
   if (tab8Ball) tab8Ball.addEventListener('click', () => switchTab('8ball'));
@@ -83,6 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (tabCookie) tabCookie.addEventListener('click', () => switchTab('cookie'));
   if (tabRps) tabRps.addEventListener('click', () => switchTab('rps'));
   if (tabCards) tabCards.addEventListener('click', () => switchTab('cards'));
+  if (tabMines) tabMines.addEventListener('click', () => switchTab('mines'));
+  if (tabPlinko) tabPlinko.addEventListener('click', () => switchTab('plinko'));
+  if (tabRace) tabRace.addEventListener('click', () => switchTab('race'));
 
   const btnSound = document.getElementById('btn-sound');
   const iconOn = document.getElementById('sound-icon-on');
