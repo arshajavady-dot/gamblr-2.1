@@ -43,6 +43,7 @@ class CoinFlipManager {
 
     if (pickHeads) {
       pickHeads.addEventListener('click', () => {
+        if (this.isFlipping) return;
         this.userPick = 'heads';
         pickHeads.classList.add('active');
         if (pickTails) pickTails.classList.remove('active');
@@ -52,6 +53,7 @@ class CoinFlipManager {
 
     if (pickTails) {
       pickTails.addEventListener('click', () => {
+        if (this.isFlipping) return;
         this.userPick = 'tails';
         pickTails.classList.add('active');
         if (pickHeads) pickHeads.classList.remove('active');
@@ -83,7 +85,12 @@ class CoinFlipManager {
     this.isFlipping = true;
 
     const btnFlip = document.getElementById('btn-flip');
+    const pickHeads = document.getElementById('pick-heads');
+    const pickTails = document.getElementById('pick-tails');
+
     if (btnFlip) btnFlip.disabled = true;
+    if (pickHeads) pickHeads.style.pointerEvents = 'none';
+    if (pickTails) pickTails.style.pointerEvents = 'none';
 
     const stage = document.querySelector('.coin-stage');
     if (stage) stage.classList.add('flipping');
@@ -124,6 +131,8 @@ class CoinFlipManager {
       this.processResult(outcome);
       this.isFlipping = false;
       if (btnFlip) btnFlip.disabled = false;
+      if (pickHeads) pickHeads.style.pointerEvents = 'auto';
+      if (pickTails) pickTails.style.pointerEvents = 'auto';
     }, 3000);
   }
 
@@ -184,6 +193,7 @@ class CoinFlipManager {
       if (window.profileManager) window.profileManager.addXP(50, window.innerWidth / 2, window.innerHeight / 2);
     } else {
       this.stats.currentStreak = 0;
+      if (window.profileManager) window.profileManager.triggerLoseEffect();
     }
 
     this.stats.history.unshift(outcome);

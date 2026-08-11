@@ -1268,5 +1268,55 @@
       </div>
     </div>
   </div>
+
+  <!-- Cyber Level & Career Stats Modal -->
+  <div id="stats-modal" class="modal-overlay hidden">
+    <div class="modal-card stats-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">🏆</span>
+          <h2>Career Stats & Level XP</h2>
+        </div>
+        <button id="btn-close-stats-modal" class="modal-close-btn">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Level & XP Header Box -->
+        <div class="career-xp-banner">
+          <div class="xp-banner-header">
+            <span id="career-modal-level" class="career-lvl-tag">LEVEL 1</span>
+            <span id="career-modal-xp-text" class="career-xp-text">0 / 40 XP (0%)</span>
+          </div>
+          <div class="xp-bar-container career-xp-container">
+            <div id="career-modal-xp-bar" class="xp-bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Overall Career Record -->
+        <div class="career-summary-grid">
+          <div class="stat-box highlight">
+            <span id="career-total-wins" class="stat-value text-green">0</span>
+            <span class="stat-label">TOTAL WINS</span>
+          </div>
+          <div class="stat-box negative">
+            <span id="career-total-losses" class="stat-value text-red">0</span>
+            <span class="stat-label">TOTAL LOSSES</span>
+          </div>
+          <div class="stat-box highlight-gold">
+            <span id="career-win-pct" class="stat-value text-gold">0%</span>
+            <span class="stat-label">WIN RATE</span>
+          </div>
+        </div>
+
+        <!-- Per Game Breakdown List -->
+        <div class="game-breakdown-section">
+          <h4>🎮 Mode-by-Mode Record</h4>
+          <div id="game-breakdown-list" class="game-breakdown-list">
+            <!-- Injected dynamically by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

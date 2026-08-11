@@ -116,7 +116,8 @@ class RpsManager {
       this.losses++;
       this.resultText.textContent = 'AI WINS!';
       this.resultText.style.color = '#ff3366';
-      if (window.soundEngine) window.soundEngine.playCoinFlip(); // generic thud
+      if (window.soundEngine) window.soundEngine.playCoinFlip();
+      if (window.profileManager) window.profileManager.triggerLoseEffect();
     }
     
     this.resultBanner.classList.remove('win', 'lose', 'tie');

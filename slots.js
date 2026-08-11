@@ -138,6 +138,7 @@ class SlotMachineManager {
       if (window.profileManager) window.profileManager.addXP(isJackpot ? 150 : 50, window.innerWidth / 2, window.innerHeight / 2);
     } else {
       if (window.soundEngine) window.soundEngine.playCoinFlip(); 
+      if (window.profileManager) window.profileManager.triggerLoseEffect();
     }
 
     this.saveStats();

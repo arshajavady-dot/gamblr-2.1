@@ -130,7 +130,6 @@ class DiceManager {
     this.resultBanner.classList.add('win');
 
     if (window.soundEngine) window.soundEngine.playCoinWin();
-    if (window.profileManager) window.profileManager.addXP(Math.round(20 * sum), window.innerWidth / 2, window.innerHeight / 2);
 
     this.saveStats();
     this.updateStats();

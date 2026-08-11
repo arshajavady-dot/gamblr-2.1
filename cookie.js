@@ -111,7 +111,6 @@ class CookieManager {
     this.totalOpened++;
     if (fortune.type === 'good') {
       this.goodCount++;
-      if (window.profileManager) window.profileManager.addXP(50, window.innerWidth / 2, window.innerHeight / 2);
     }
     if (fortune.type === 'bad') this.badCount++;
 

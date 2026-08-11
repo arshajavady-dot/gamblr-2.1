@@ -187,6 +187,7 @@ class MinesManager {
       this.resultText.textContent = 'BOOM! YOU HIT A MINE!';
       this.resultText.style.color = '#ff3366';
       this.resultBanner.className = 'result-banner active lose';
+      if (window.profileManager) window.profileManager.triggerLoseEffect();
     }
 
     this.btnStart.style.display = 'block';

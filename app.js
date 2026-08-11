@@ -206,7 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       const scrollRatio = navTabsContainer.scrollLeft / maxScroll;
-      navSlider.value = scrollRatio * 100;
+      const pct = Math.min(100, Math.max(0, scrollRatio * 100));
+      navSlider.value = pct;
+      navSlider.style.background = `linear-gradient(90deg, #00ff9d ${pct}%, rgba(255, 255, 255, 0.08) ${pct}%)`;
     };
 
     navTabsContainer.addEventListener('scroll', updateSlider);
@@ -214,8 +216,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     navSlider.addEventListener('input', (e) => {
       const maxScroll = navTabsContainer.scrollWidth - navTabsContainer.clientWidth;
-      const targetScroll = (e.target.value / 100) * maxScroll;
+      const pct = e.target.value;
+      const targetScroll = (pct / 100) * maxScroll;
       navTabsContainer.scrollLeft = targetScroll;
+      navSlider.style.background = `linear-gradient(90deg, #00ff9d ${pct}%, rgba(255, 255, 255, 0.08) ${pct}%)`;
     });
 
     // Initial check
@@ -290,6 +294,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('mousemove', (e) => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
+      window.currentMouseX = e.clientX;
+      window.currentMouseY = e.clientY;
     });
 
     for (let i = 0; i < count; i++) {
@@ -354,7 +360,31 @@ document.addEventListener('DOMContentLoaded', () => {
     drawParticles();
   }
 
-  console.log('⚡ gamblr initialized with Cyber Particle Field, Level XP System, and 12 High-Stakes Modes.');
+  // 2. 3D Holographic Card Mouse Tilt Effect
+  const tiltableCards = document.querySelectorAll('.game-card, .stats-panel, .card-glass');
+  tiltableCards.forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      const rotateX = ((y - centerY) / centerY) * -5;
+      const rotateY = ((x - centerX) / centerX) * 5;
+
+      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.008)`;
+      card.style.transition = 'transform 0.08s ease-out';
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
+      card.style.transition = 'transform 0.35s ease';
+    });
+  });
+
+  console.log('⚡ gamblr initialized with 3D Cyber Swipe, 3D Card Tilt, Cyber Particle Field, Level XP System, and 12 High-Stakes Modes.');
 });
 
 

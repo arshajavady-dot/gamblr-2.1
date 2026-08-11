@@ -151,6 +151,7 @@ class CardsManager {
       this.resultBanner.className = 'result-banner active lose';
       
       if (window.soundEngine) window.soundEngine.playCoinFlip(); // Thud
+      if (window.profileManager) window.profileManager.triggerLoseEffect();
       
       this.addToHistory(choice, oldCard, newCard, false);
       

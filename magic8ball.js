@@ -161,7 +161,6 @@ class Magic8BallManager {
     this.stats.total++;
     if (chosen.type === 'Affirmative') {
       this.stats.affirmative++;
-      if (window.profileManager) window.profileManager.addXP(30, window.innerWidth / 2, window.innerHeight / 2);
     }
     else if (chosen.type === 'Non-committal') this.stats.nonCommittal++;
     else if (chosen.type === 'Negative') this.stats.negative++;

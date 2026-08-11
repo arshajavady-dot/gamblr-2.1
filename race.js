@@ -222,6 +222,7 @@ class RaceManager {
       this.resultText.textContent = `${winner.emoji} ${winner.name.toUpperCase()} WINS! BETTER LUCK NEXT TIME!`;
       this.resultText.style.color = '#ff3366';
       this.resultBanner.className = 'result-banner active lose';
+      if (window.profileManager) window.profileManager.triggerLoseEffect();
     }
 
     this.saveStats();

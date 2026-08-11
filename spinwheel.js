@@ -260,7 +260,6 @@ class SpinWheelManager {
 
   processResult(winner) {
     this.stats.totalSpins++;
-    if (window.profileManager) window.profileManager.addXP(40, window.innerWidth / 2, window.innerHeight / 2);
     
     const logEntry = {
       winner,

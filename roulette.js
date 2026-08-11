@@ -263,7 +263,6 @@ class RoulettePredictorManager {
 
     // Update Stats
     this.stats.total++;
-    if (window.profileManager) window.profileManager.addXP(40, window.innerWidth / 2, window.innerHeight / 2);
     if (pocket.color === 'red') this.stats.red++;
     else if (pocket.color === 'black') this.stats.black++;
     else if (pocket.color === 'green') this.stats.green++;
