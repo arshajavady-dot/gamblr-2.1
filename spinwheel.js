@@ -30,6 +30,7 @@ class SpinWheelManager {
   }
 
   init() {
+    this.loadData();
     this.bindEvents();
     this.renderSegmentEditor();
     this.drawWheel();
@@ -259,6 +260,7 @@ class SpinWheelManager {
 
   processResult(winner) {
     this.stats.totalSpins++;
+    if (window.profileManager) window.profileManager.addXP(40, window.innerWidth / 2, window.innerHeight / 2);
     
     const logEntry = {
       winner,
@@ -329,23 +331,33 @@ class SpinWheelManager {
   }
 
   saveData() {
-    localStorage.setItem('gamblr_wheel_segments', JSON.stringify(this.segments));
-    localStorage.setItem('gamblr_wheel_stats', JSON.stringify(this.stats));
+    if (window.profileManager) {
+      window.profileManager.saveGameStats('wheel', { segments: this.segments, stats: this.stats });
+    } else {
+      localStorage.setItem('gamblr_wheel_segments', JSON.stringify(this.segments));
+      localStorage.setItem('gamblr_wheel_stats', JSON.stringify(this.stats));
+    }
+  }
+
+  loadStats() {
+    this.loadData();
   }
 
   loadData() {
-    const savedSegs = localStorage.getItem('gamblr_wheel_segments');
-    if (savedSegs) {
-      try {
-        this.segments = JSON.parse(savedSegs);
-      } catch (e) {}
-    }
-
-    const savedStats = localStorage.getItem('gamblr_wheel_stats');
-    if (savedStats) {
-      try {
-        this.stats = Object.assign(this.stats, JSON.parse(savedStats));
-      } catch (e) {}
+    const defaultData = { segments: ['🍕 Pizza', '🍔 Burger', '🍣 Sushi', '🌮 Tacos'], stats: { totalSpins: 0, history: [] } };
+    if (window.profileManager) {
+      const saved = window.profileManager.getGameStats('wheel', defaultData);
+      if (saved.segments) this.segments = saved.segments;
+      if (saved.stats) this.stats = Object.assign({ totalSpins: 0, history: [] }, saved.stats);
+    } else {
+      const savedSegs = localStorage.getItem('gamblr_wheel_segments');
+      if (savedSegs) {
+        try { this.segments = JSON.parse(savedSegs); } catch (e) {}
+      }
+      const savedStats = localStorage.getItem('gamblr_wheel_stats');
+      if (savedStats) {
+        try { this.stats = Object.assign(this.stats, JSON.parse(savedStats)); } catch (e) {}
+      }
     }
   }
 

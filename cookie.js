@@ -4,18 +4,6 @@
 
 class CookieManager {
   constructor() {
-    this.stage = document.getElementById('cookie-stage');
-    this.cookieWrapper = document.getElementById('cookie-wrapper');
-    this.btnNew = document.getElementById('btn-new-cookie');
-    this.btnReset = document.getElementById('btn-reset-cookie-stats');
-    this.resultBanner = document.getElementById('cookie-result-banner');
-    this.fortuneSlip = document.getElementById('fortune-slip');
-    this.historyList = document.getElementById('cookie-history-list');
-
-    this.statOpened = document.getElementById('stat-cookie-opened');
-    this.statGood = document.getElementById('stat-cookie-good');
-    this.statBad = document.getElementById('stat-cookie-bad');
-
     this.isOpened = false;
     this.isAnimating = false;
     
@@ -50,6 +38,20 @@ class CookieManager {
   }
 
   init() {
+    this.stage = document.getElementById('cookie-stage');
+    this.cookieWrapper = document.getElementById('cookie-wrapper');
+    this.btnNew = document.getElementById('btn-new-cookie');
+    this.btnReset = document.getElementById('btn-reset-cookie-stats');
+    this.resultBanner = document.getElementById('cookie-result-banner');
+    this.fortuneSlip = document.getElementById('fortune-slip');
+    this.historyList = document.getElementById('cookie-history-list');
+
+    this.statOpened = document.getElementById('stat-cookie-opened');
+    this.statGood = document.getElementById('stat-cookie-good');
+    this.statBad = document.getElementById('stat-cookie-bad');
+
+    this.loadStats();
+    this.updateStatsUI();
     if (!this.cookieWrapper) return;
 
     this.cookieWrapper.addEventListener('click', () => {
@@ -107,17 +109,46 @@ class CookieManager {
 
   updateStats(fortune) {
     this.totalOpened++;
-    if (fortune.type === 'good') this.goodCount++;
+    if (fortune.type === 'good') {
+      this.goodCount++;
+      if (window.profileManager) window.profileManager.addXP(50, window.innerWidth / 2, window.innerHeight / 2);
+    }
     if (fortune.type === 'bad') this.badCount++;
 
-    this.statOpened.textContent = this.totalOpened;
-    this.statGood.textContent = this.goodCount;
-    this.statBad.textContent = this.badCount;
+    this.saveStats();
+    this.updateStats();
 
     this.addToHistory(fortune);
   }
 
+  saveStats() {
+    if (window.profileManager) {
+      window.profileManager.saveGameStats('cookie', { totalOpened: this.totalOpened, goodCount: this.goodCount, badCount: this.badCount });
+    }
+  }
+
+  loadStats() {
+    const defaultData = { totalOpened: 0, goodCount: 0, badCount: 0 };
+    if (window.profileManager) {
+      const saved = window.profileManager.getGameStats('cookie', defaultData);
+      this.totalOpened = saved.totalOpened || 0;
+      this.goodCount = saved.goodCount || 0;
+      this.badCount = saved.badCount || 0;
+    }
+  }
+
+  updateStatsUI() {
+    this.updateStats();
+  }
+
+  updateStats() {
+    if (this.statOpened) this.statOpened.textContent = this.totalOpened;
+    if (this.statGood) this.statGood.textContent = this.goodCount;
+    if (this.statBad) this.statBad.textContent = this.badCount;
+  }
+
   addToHistory(fortune) {
+    if (!this.historyList) return;
     const pill = document.createElement('div');
     pill.className = `history-pill ${fortune.type === 'good' ? 'win' : ''}`;
     pill.innerHTML = `
@@ -139,23 +170,20 @@ class CookieManager {
   resetCookie() {
     if (this.isAnimating || !this.isOpened) return;
     this.isOpened = false;
-    this.btnNew.innerHTML = 'CRACK COOKIE <span class="btn-shortcut">[SPACE]</span>';
+    if (this.btnNew) this.btnNew.innerHTML = 'CRACK COOKIE <span class="btn-shortcut">[SPACE]</span>';
     
-    this.cookieWrapper.classList.remove('opened');
-    this.resultBanner.classList.remove('active');
-    this.fortuneSlip.textContent = '';
+    if (this.cookieWrapper) this.cookieWrapper.classList.remove('opened');
+    if (this.resultBanner) this.resultBanner.classList.remove('active');
+    if (this.fortuneSlip) this.fortuneSlip.textContent = '';
   }
 
   resetStats() {
     this.totalOpened = 0;
     this.goodCount = 0;
     this.badCount = 0;
-    
-    this.statOpened.textContent = 0;
-    this.statGood.textContent = 0;
-    this.statBad.textContent = 0;
-    
-    this.historyList.innerHTML = '<span class="empty-msg">No cookies opened</span>';
+    this.saveStats();
+    this.updateStats();
+    if (this.historyList) this.historyList.innerHTML = '<span class="empty-msg">No cookies opened</span>';
   }
 }
 

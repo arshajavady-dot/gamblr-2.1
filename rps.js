@@ -4,23 +4,6 @@
 
 class RpsManager {
   constructor() {
-    this.stage = document.getElementById('rps-stage');
-    this.btnRock = document.getElementById('btn-rps-rock');
-    this.btnPaper = document.getElementById('btn-rps-paper');
-    this.btnScissors = document.getElementById('btn-rps-scissors');
-    
-    this.playerHand = document.getElementById('rps-player-hand');
-    this.aiHand = document.getElementById('rps-ai-hand');
-    
-    this.resultBanner = document.getElementById('rps-result-banner');
-    this.resultText = document.getElementById('rps-result-text');
-    this.historyList = document.getElementById('rps-history-list');
-
-    this.statWins = document.getElementById('stat-rps-wins');
-    this.statLosses = document.getElementById('stat-rps-losses');
-    this.statTies = document.getElementById('stat-rps-ties');
-    this.btnReset = document.getElementById('btn-reset-rps-stats');
-
     this.wins = 0;
     this.losses = 0;
     this.ties = 0;
@@ -35,6 +18,23 @@ class RpsManager {
   }
 
   init() {
+    this.stage = document.getElementById('rps-stage');
+    this.btnRock = document.getElementById('btn-rps-rock');
+    this.btnPaper = document.getElementById('btn-rps-paper');
+    this.btnScissors = document.getElementById('btn-rps-scissors');
+    this.playerHand = document.getElementById('rps-player-hand');
+    this.aiHand = document.getElementById('rps-ai-hand');
+    this.resultBanner = document.getElementById('rps-result-banner');
+    this.resultText = document.getElementById('rps-result-text');
+    this.historyList = document.getElementById('rps-history-list');
+
+    this.statWins = document.getElementById('stat-rps-wins');
+    this.statLosses = document.getElementById('stat-rps-losses');
+    this.statTies = document.getElementById('stat-rps-ties');
+    this.btnReset = document.getElementById('btn-reset-rps-stats');
+
+    this.loadStats();
+    this.updateStatsUI();
     if (!this.stage) return;
     
     if (this.btnRock) this.btnRock.addEventListener('click', () => this.play('rock'));
@@ -110,6 +110,7 @@ class RpsManager {
       this.resultText.textContent = 'YOU WIN!';
       this.resultText.style.color = '#00e676';
       if (window.soundEngine) window.soundEngine.playCoinWin();
+      if (window.profileManager) window.profileManager.addXP(50, window.innerWidth / 2, window.innerHeight / 2);
     } else {
       result = 'lose';
       this.losses++;
@@ -121,17 +122,39 @@ class RpsManager {
     this.resultBanner.classList.remove('win', 'lose', 'tie');
     this.resultBanner.classList.add(result);
     
+    this.saveStats();
     this.updateStats();
     this.addToHistory(player, ai, result);
   }
 
+  saveStats() {
+    if (window.profileManager) {
+      window.profileManager.saveGameStats('rps', { wins: this.wins, losses: this.losses, ties: this.ties });
+    }
+  }
+
+  loadStats() {
+    const defaultData = { wins: 0, losses: 0, ties: 0 };
+    if (window.profileManager) {
+      const saved = window.profileManager.getGameStats('rps', defaultData);
+      this.wins = saved.wins || 0;
+      this.losses = saved.losses || 0;
+      this.ties = saved.ties || 0;
+    }
+  }
+
+  updateStatsUI() {
+    this.updateStats();
+  }
+
   updateStats() {
-    this.statWins.textContent = this.wins;
-    this.statLosses.textContent = this.losses;
-    this.statTies.textContent = this.ties;
+    if (this.statWins) this.statWins.textContent = this.wins;
+    if (this.statLosses) this.statLosses.textContent = this.losses;
+    if (this.statTies) this.statTies.textContent = this.ties;
   }
 
   addToHistory(player, ai, result) {
+    if (!this.historyList) return;
     const pill = document.createElement('div');
     pill.className = `history-pill ${result}`;
     
@@ -159,11 +182,12 @@ class RpsManager {
     this.wins = 0;
     this.losses = 0;
     this.ties = 0;
+    this.saveStats();
     this.updateStats();
-    this.historyList.innerHTML = '<span class="empty-msg">No matches played</span>';
-    this.resultBanner.classList.remove('active');
-    this.playerHand.textContent = '✊';
-    this.aiHand.textContent = '✊';
+    if (this.historyList) this.historyList.innerHTML = '<span class="empty-msg">No matches played</span>';
+    if (this.resultBanner) this.resultBanner.classList.remove('active');
+    if (this.playerHand) this.playerHand.textContent = '✊';
+    if (this.aiHand) this.aiHand.textContent = '✊';
   }
 }
 

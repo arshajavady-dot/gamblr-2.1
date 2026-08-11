@@ -4,6 +4,19 @@
 
 class MinesManager {
   constructor() {
+    this.gridSize = 25; // 5x5
+    this.bombCount = 3;
+    this.mines = [];
+    this.revealedCount = 0;
+    this.currentMultiplier = 1.0;
+    this.isPlaying = false;
+
+    this.gamesPlayed = 0;
+    this.wins = 0;
+    this.losses = 0;
+  }
+
+  init() {
     this.gridElement = document.getElementById('mines-grid');
     this.btnStart = document.getElementById('btn-mines-start');
     this.btnCashout = document.getElementById('btn-mines-cashout');
@@ -20,19 +33,8 @@ class MinesManager {
     this.statLosses = document.getElementById('stat-mines-losses');
     this.btnReset = document.getElementById('btn-reset-mines-stats');
 
-    this.gridSize = 25; // 5x5
-    this.bombCount = 3;
-    this.mines = [];
-    this.revealedCount = 0;
-    this.currentMultiplier = 1.0;
-    this.isPlaying = false;
-
-    this.gamesPlayed = 0;
-    this.wins = 0;
-    this.losses = 0;
-  }
-
-  init() {
+    this.loadStats();
+    this.updateStatsUI();
     if (!this.gridElement) return;
 
     this.renderEmptyGrid();
@@ -179,6 +181,7 @@ class MinesManager {
       this.resultText.style.color = '#00e676';
       this.resultBanner.className = 'result-banner active win';
       if (window.soundEngine) window.soundEngine.playCoinWin();
+      if (window.profileManager) window.profileManager.addXP(Math.round(50 * this.currentMultiplier), window.innerWidth / 2, window.innerHeight / 2);
     } else {
       this.losses++;
       this.resultText.textContent = 'BOOM! YOU HIT A MINE!';
@@ -191,8 +194,29 @@ class MinesManager {
     this.btnCashout.style.display = 'none';
     this.bombSelect.disabled = false;
 
+    this.saveStats();
     this.updateStats();
     this.addToHistory(won, this.currentMultiplier);
+  }
+
+  saveStats() {
+    if (window.profileManager) {
+      window.profileManager.saveGameStats('mines', { gamesPlayed: this.gamesPlayed, wins: this.wins, losses: this.losses });
+    }
+  }
+
+  loadStats() {
+    const defaultData = { gamesPlayed: 0, wins: 0, losses: 0 };
+    if (window.profileManager) {
+      const saved = window.profileManager.getGameStats('mines', defaultData);
+      this.gamesPlayed = saved.gamesPlayed || 0;
+      this.wins = saved.wins || 0;
+      this.losses = saved.losses || 0;
+    }
+  }
+
+  updateStatsUI() {
+    this.updateStats();
   }
 
   updateStats() {
@@ -202,6 +226,7 @@ class MinesManager {
   }
 
   addToHistory(won, mult) {
+    if (!this.historyList) return;
     const pill = document.createElement('div');
     pill.className = `history-pill ${won ? 'win' : 'lose'}`;
     pill.innerHTML = `
@@ -223,10 +248,11 @@ class MinesManager {
     this.gamesPlayed = 0;
     this.wins = 0;
     this.losses = 0;
+    this.saveStats();
     this.updateStats();
-    this.historyList.innerHTML = '<span class="empty-msg">No games played</span>';
+    if (this.historyList) this.historyList.innerHTML = '<span class="empty-msg">No games played</span>';
     this.renderEmptyGrid();
-    this.resultBanner.className = 'result-banner';
+    if (this.resultBanner) this.resultBanner.className = 'result-banner';
     this.updateDisplays(1.0, 0);
   }
 }

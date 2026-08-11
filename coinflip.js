@@ -181,6 +181,7 @@ class CoinFlipManager {
         this.stats.bestStreak = this.stats.currentStreak;
       }
       if (window.soundEngine) window.soundEngine.playWheelWin();
+      if (window.profileManager) window.profileManager.addXP(50, window.innerWidth / 2, window.innerHeight / 2);
     } else {
       this.stats.currentStreak = 0;
     }
@@ -261,16 +262,32 @@ class CoinFlipManager {
   }
 
   saveStats() {
-    localStorage.setItem('gamblr_coin_stats', JSON.stringify(this.stats));
+    if (window.profileManager) {
+      window.profileManager.saveGameStats('coin', this.stats);
+    } else {
+      localStorage.setItem('gamblr_coin_stats', JSON.stringify(this.stats));
+    }
   }
 
   loadStats() {
-    const saved = localStorage.getItem('gamblr_coin_stats');
-    if (saved) {
-      try {
-        this.stats = Object.assign(this.stats, JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to load coin stats', e);
+    const defaultStats = {
+      totalFlips: 0,
+      heads: 0,
+      tails: 0,
+      wins: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      history: []
+    };
+
+    if (window.profileManager) {
+      this.stats = window.profileManager.getGameStats('coin', defaultStats);
+    } else {
+      const saved = localStorage.getItem('gamblr_coin_stats');
+      if (saved) {
+        try {
+          this.stats = Object.assign(defaultStats, JSON.parse(saved));
+        } catch (e) {}
       }
     }
   }

@@ -143,21 +143,35 @@ class RoulettePredictorManager {
   }
 
   loadStats() {
-    const saved = localStorage.getItem('gamblr_roulette_stats');
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        this.stats = data.stats || this.stats;
-        this.history = data.history || [];
-      } catch (e) {}
+    const defaultData = { stats: { total: 0, red: 0, black: 0, green: 0 }, history: [] };
+    if (window.profileManager) {
+      const saved = window.profileManager.getGameStats('roulette', defaultData);
+      this.stats = saved.stats || { total: 0, red: 0, black: 0, green: 0 };
+      this.history = saved.history || [];
+    } else {
+      const saved = localStorage.getItem('gamblr_roulette_stats');
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          this.stats = data.stats || this.stats;
+          this.history = data.history || [];
+        } catch (e) {}
+      }
     }
   }
 
   saveStats() {
-    localStorage.setItem('gamblr_roulette_stats', JSON.stringify({
-      stats: this.stats,
-      history: this.history.slice(0, 30),
-    }));
+    if (window.profileManager) {
+      window.profileManager.saveGameStats('roulette', {
+        stats: this.stats,
+        history: this.history.slice(0, 30),
+      });
+    } else {
+      localStorage.setItem('gamblr_roulette_stats', JSON.stringify({
+        stats: this.stats,
+        history: this.history.slice(0, 30),
+      }));
+    }
   }
 
   predictNext() {
@@ -249,6 +263,7 @@ class RoulettePredictorManager {
 
     // Update Stats
     this.stats.total++;
+    if (window.profileManager) window.profileManager.addXP(40, window.innerWidth / 2, window.innerHeight / 2);
     if (pocket.color === 'red') this.stats.red++;
     else if (pocket.color === 'black') this.stats.black++;
     else if (pocket.color === 'green') this.stats.green++;

@@ -4,20 +4,6 @@
 
 class RaceManager {
   constructor() {
-    this.canvas = document.getElementById('race-canvas');
-    this.btnStart = document.getElementById('btn-race-start');
-    this.pickContainer = document.getElementById('race-picker');
-    
-    this.resultBanner = document.getElementById('race-result-banner');
-    this.resultText = document.getElementById('race-result-text');
-    this.commentary = document.getElementById('race-commentary');
-    this.historyList = document.getElementById('race-history-list');
-
-    this.statRaces = document.getElementById('stat-race-total');
-    this.statWins = document.getElementById('stat-race-wins');
-    this.statWinRate = document.getElementById('stat-race-winrate');
-    this.btnReset = document.getElementById('btn-reset-race-stats');
-
     this.ctx = null;
     this.userPick = 'turtle'; // default
 
@@ -37,6 +23,22 @@ class RaceManager {
   }
 
   init() {
+    this.canvas = document.getElementById('race-canvas');
+    this.btnStart = document.getElementById('btn-race-start');
+    this.pickContainer = document.getElementById('race-picker');
+    
+    this.resultBanner = document.getElementById('race-result-banner');
+    this.resultText = document.getElementById('race-result-text');
+    this.commentary = document.getElementById('race-commentary');
+    this.historyList = document.getElementById('race-history-list');
+
+    this.statRaces = document.getElementById('stat-race-total');
+    this.statWins = document.getElementById('stat-race-wins');
+    this.statWinRate = document.getElementById('stat-race-winrate');
+    this.btnReset = document.getElementById('btn-reset-race-stats');
+
+    this.loadStats();
+    this.updateStatsUI();
     if (!this.canvas) return;
     this.ctx = this.canvas.getContext('2d');
 
@@ -215,14 +217,35 @@ class RaceManager {
       this.resultText.style.color = '#00e676';
       this.resultBanner.className = 'result-banner active win';
       if (window.soundEngine) window.soundEngine.playCoinWin();
+      if (window.profileManager) window.profileManager.addXP(100, window.innerWidth / 2, window.innerHeight / 2);
     } else {
       this.resultText.textContent = `${winner.emoji} ${winner.name.toUpperCase()} WINS! BETTER LUCK NEXT TIME!`;
       this.resultText.style.color = '#ff3366';
       this.resultBanner.className = 'result-banner active lose';
     }
 
+    this.saveStats();
     this.updateStats();
     this.addToHistory(winner, userWon);
+  }
+
+  saveStats() {
+    if (window.profileManager) {
+      window.profileManager.saveGameStats('race', { totalRaces: this.totalRaces, userWins: this.userWins });
+    }
+  }
+
+  loadStats() {
+    const defaultData = { totalRaces: 0, userWins: 0 };
+    if (window.profileManager) {
+      const saved = window.profileManager.getGameStats('race', defaultData);
+      this.totalRaces = saved.totalRaces || 0;
+      this.userWins = saved.userWins || 0;
+    }
+  }
+
+  updateStatsUI() {
+    this.updateStats();
   }
 
   updateStats() {
@@ -234,6 +257,7 @@ class RaceManager {
   }
 
   addToHistory(winner, userWon) {
+    if (!this.historyList) return;
     const pill = document.createElement('div');
     pill.className = `history-pill ${userWon ? 'win' : 'lose'}`;
     pill.innerHTML = `
@@ -254,9 +278,10 @@ class RaceManager {
   resetStats() {
     this.totalRaces = 0;
     this.userWins = 0;
+    this.saveStats();
     this.updateStats();
-    this.historyList.innerHTML = '<span class="empty-msg">No races yet</span>';
-    this.resultBanner.className = 'result-banner';
+    if (this.historyList) this.historyList.innerHTML = '<span class="empty-msg">No races yet</span>';
+    if (this.resultBanner) this.resultBanner.className = 'result-banner';
     this.drawTrack();
   }
 }

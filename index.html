@@ -11,7 +11,35 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Background Music Audio Element for Mobile & Preload -->
+  <audio id="bg-music-element" src="bg-music.mp3.mp3" loop preload="auto"></audio>
+
+  <!-- Futuristic Cyber Splash Screen Overlay -->
+  <div id="splash-screen" class="splash-screen">
+    <div class="splash-glow splash-glow-1"></div>
+    <div class="splash-glow splash-glow-2"></div>
+    <div class="splash-content">
+      <div class="splash-logo">
+        <span class="splash-icon">⚡</span>
+        <h1 class="splash-title">gamblr<span class="brand-dot">.</span></h1>
+      </div>
+      <p class="splash-subtitle">HIGH-STAKES DECISION ENGINE</p>
+      
+      <div class="splash-loader-box">
+        <div class="splash-loader-bar">
+          <div id="splash-progress" class="splash-progress"></div>
+        </div>
+        <p id="splash-status-text" class="splash-status">INITIALIZING QUANTUM CORE...</p>
+      </div>
+      
+      <button id="btn-enter-casino" class="btn-primary splash-btn hidden">
+        <span class="btn-text">ENTER CASINO 🚀</span>
+      </button>
+    </div>
+  </div>
+
   <div class="app-background">
+    <canvas id="bg-particle-canvas" class="bg-particle-canvas"></canvas>
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
     <div class="bg-grid"></div>
@@ -136,17 +164,18 @@
 
       <!-- Header Controls -->
       <div class="header-controls">
-        <button id="btn-sound" class="icon-btn" title="Toggle Sound Effects" aria-label="Toggle Sound">
-          <svg id="sound-icon-on" class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-          </svg>
-          <svg id="sound-icon-off" class="btn-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-            <line x1="23" y1="9" x2="17" y2="15"/>
-            <line x1="17" y1="9" x2="23" y2="15"/>
-          </svg>
+        <div id="header-level-badge" class="level-badge" title="Your Casino Level & XP Progress">
+          <span id="user-level-text" class="level-text">LVL 1</span>
+          <div class="xp-bar-container">
+            <div id="user-xp-bar" class="xp-bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+        <button id="btn-sound" class="music-disc-badge playing" title="Toggle Sound & Music" aria-label="Toggle Sound">
+          <span class="disc-icon">🎵</span>
+        </button>
+        <button id="btn-profile" class="btn-profile-badge" title="Player Profile & Guest Status">
+          <span id="profile-avatar-display" class="profile-avatar-icon">👤</span>
+          <span id="profile-name-display" class="profile-name-tag">Guest</span>
         </button>
       </div>
     </header>
@@ -1114,6 +1143,7 @@
   </div>
 
   <script src="sound.js"></script>
+  <script src="profile.js"></script>
   <script src="coinflip.js"></script>
   <script src="magic8ball.js"></script>
   <script src="spinwheel.js"></script>
@@ -1128,5 +1158,115 @@
   <script src="race.js"></script>
   <script src="ad_manager.js"></script>
   <script src="app.js"></script>
+  <!-- Cyber Profile & Guest Login Modal -->
+  <div id="profile-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">👤</span>
+          <h2>Account & Profile</h2>
+        </div>
+        <button id="btn-close-profile" class="modal-close-btn">✕</button>
+      </div>
+
+      <!-- Auth Navigation Tabs -->
+      <div class="auth-tabs-bar">
+        <button class="auth-tab-btn active" data-tab="login">Log In</button>
+        <button class="auth-tab-btn" data-tab="register">Create Account</button>
+        <button class="auth-tab-btn" data-tab="profile">Profile & Avatar</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Alert Notification Banner -->
+        <div id="auth-alert-box" class="auth-alert-box hidden"></div>
+
+        <div class="profile-status-banner">
+          <div class="status-avatar" id="modal-avatar-preview">👤</div>
+          <div class="status-info">
+            <h3 id="modal-username-title">Guest Player</h3>
+            <span id="modal-user-badge" class="badge-guest">GUEST MODE</span>
+          </div>
+        </div>
+
+        <!-- VIEW 1: LOG IN -->
+        <div id="auth-view-login" class="auth-tab-view active">
+          <form onsubmit="return false;">
+            <div class="profile-section">
+              <label for="login-username">Username:</label>
+              <input type="text" id="login-username" placeholder="Enter username..." autocomplete="username">
+            </div>
+            <div class="profile-section">
+              <label for="login-password">Password:</label>
+              <input type="password" id="login-password" placeholder="Enter password..." autocomplete="current-password">
+            </div>
+            <div class="profile-actions" style="margin-top: 1rem;">
+              <button id="btn-login-submit" class="btn-primary" style="width: 100%;">LOG IN 🚀</button>
+              <button id="btn-guest-mode" class="btn-secondary" style="width: 100%; margin-top: 8px;">Continue Playing as Guest</button>
+            </div>
+          </form>
+
+          <div style="margin: 1.5rem 0 1rem 0; border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 1rem;">
+            <label for="import-sync-code" style="font-size: 0.85rem; color: #00ff9d; font-weight: 600;">🔑 Have a Device Sync Key?</label>
+            <div style="display: flex; gap: 8px; margin-top: 6px;">
+              <input type="text" id="import-sync-code" placeholder="Paste GAMBLR-SYNC- code..." style="flex: 1; font-size: 0.8rem;">
+              <button id="btn-import-sync" class="btn-secondary" style="white-space: nowrap; padding: 0 12px; font-size: 0.8rem;">IMPORT 📥</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 2: REGISTER / CREATE ACCOUNT -->
+        <div id="auth-view-register" class="auth-tab-view">
+          <form onsubmit="return false;">
+            <div class="profile-section">
+              <label for="reg-username">Choose Username:</label>
+              <input type="text" id="reg-username" placeholder="Choose a unique username..." maxlength="16" autocomplete="username">
+            </div>
+            <div class="profile-section">
+              <label for="reg-password">Choose Password:</label>
+              <input type="password" id="reg-password" placeholder="Create password..." autocomplete="new-password">
+            </div>
+            <div class="profile-section">
+              <label for="reg-password-confirm">Confirm Password:</label>
+              <input type="password" id="reg-password-confirm" placeholder="Confirm password..." autocomplete="new-password">
+            </div>
+            <div class="profile-actions" style="margin-top: 1rem;">
+              <button id="btn-register-submit" class="btn-primary" style="width: 100%;">CREATE ACCOUNT 🎉</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- VIEW 3: PROFILE & AVATAR SETTINGS -->
+        <div id="auth-view-profile" class="auth-tab-view">
+          <div class="profile-section">
+            <label>Choose Custom Avatar:</label>
+            <div class="avatar-picker-grid">
+              <button class="avatar-option active" data-avatar="👤">👤</button>
+              <button class="avatar-option" data-avatar="🎰">🎰</button>
+              <button class="avatar-option" data-avatar="💎">💎</button>
+              <button class="avatar-option" data-avatar="🎲">🎲</button>
+              <button class="avatar-option" data-avatar="👑">👑</button>
+              <button class="avatar-option" data-avatar="🚀">🚀</button>
+              <button class="avatar-option" data-avatar="🤖">🤖</button>
+              <button class="avatar-option" data-avatar="⚡">⚡</button>
+              <button class="avatar-option" data-avatar="🦊">🦊</button>
+              <button class="avatar-option" data-avatar="🐉">🐉</button>
+            </div>
+          </div>
+
+          <div style="margin: 1.2rem 0 1rem 0; border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 1rem;">
+            <label style="font-size: 0.85rem; color: #00b4d8; font-weight: 600;">📱 Sync to Another Device</label>
+            <p style="font-size: 0.75rem; color: #94a3b8; margin: 4px 0 8px 0;">Copy your secret sync code to transfer your account and stats to your phone, tablet, or another browser!</p>
+            <button id="btn-export-sync" class="btn-secondary" style="width: 100%; border-color: #00b4d8; color: #00b4d8; font-size: 0.85rem;">📋 COPY DEVICE SYNC KEY</button>
+          </div>
+
+          <div class="profile-actions" style="margin-top: 1rem;">
+            <button id="btn-save-avatar" class="btn-primary" style="width: 100%;">SAVE AVATAR</button>
+            <button id="btn-logout" class="btn-secondary" style="width: 100%; margin-top: 8px;">Log Out to Guest Mode</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
 </body>
 </html>

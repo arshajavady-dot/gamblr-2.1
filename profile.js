@@ -1,0 +1,637 @@
+/* ==========================================================================
+   gamblr - User Profile & Account Authentication Engine
+   With Username Availability & Profanity/Slur Filter
+   ========================================================================== */
+
+class ProfileManager {
+  constructor() {
+    this.sessionKey = 'gamblr_current_session';
+    this.dbKey = 'gamblr_accounts_db';
+
+    this.profile = {
+      username: 'Guest',
+      avatar: '👤',
+      isLoggedIn: false
+    };
+
+    // Profanity & Slur Blacklist (Normalized check for leetspeak)
+    this.slurList = [
+      'nigger', 'nigga', 'faggot', 'fag', 'retard', 'kike', 'spic', 'chink',
+      'cunt', 'whore', 'slut', 'bastard', 'bitch', 'fuck', 'shit', 'pussy',
+      'dick', 'cock', 'asshole', 'penis', 'vagina'
+    ];
+
+    this.modal = null;
+    this.btnProfile = null;
+    this.avatarDisplay = null;
+    this.nameDisplay = null;
+  }
+
+  init() {
+    this.loadSession();
+
+    this.modal = document.getElementById('profile-modal');
+    this.btnProfile = document.getElementById('btn-profile');
+    this.avatarDisplay = document.getElementById('profile-avatar-display');
+    this.nameDisplay = document.getElementById('profile-name-display');
+
+    if (this.btnProfile) {
+      this.btnProfile.addEventListener('click', () => this.openModal());
+    }
+
+    const btnClose = document.getElementById('btn-close-profile');
+    if (btnClose) {
+      btnClose.addEventListener('click', () => this.closeModal());
+    }
+
+    if (this.modal) {
+      this.modal.addEventListener('click', (e) => {
+        if (e.target === this.modal) this.closeModal();
+      });
+    }
+
+    // Auth Tab Switchers
+    const tabs = document.querySelectorAll('.auth-tab-btn');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const targetView = tab.getAttribute('data-tab');
+        document.querySelectorAll('.auth-tab-view').forEach(v => v.classList.remove('active'));
+        const activeView = document.getElementById(`auth-view-${targetView}`);
+        if (activeView) activeView.classList.add('active');
+        this.clearAlert();
+      });
+    });
+
+    // Form Event Listeners
+    const btnLoginSubmit = document.getElementById('btn-login-submit');
+    if (btnLoginSubmit) {
+      btnLoginSubmit.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.handleLogin();
+      });
+    }
+
+    const btnRegisterSubmit = document.getElementById('btn-register-submit');
+    if (btnRegisterSubmit) {
+      btnRegisterSubmit.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.handleRegister();
+      });
+    }
+
+    const btnGuestMode = document.getElementById('btn-guest-mode');
+    if (btnGuestMode) {
+      btnGuestMode.addEventListener('click', () => this.setGuestMode());
+    }
+
+    const btnLogout = document.getElementById('btn-logout');
+    if (btnLogout) {
+      btnLogout.addEventListener('click', () => this.setGuestMode());
+    }
+
+    const btnSaveAvatar = document.getElementById('btn-save-avatar');
+    if (btnSaveAvatar) {
+      btnSaveAvatar.addEventListener('click', () => this.saveAvatarOnly());
+    }
+
+    const btnExportSync = document.getElementById('btn-export-sync');
+    if (btnExportSync) {
+      btnExportSync.addEventListener('click', () => this.handleExportSync());
+    }
+
+    const btnImportSync = document.getElementById('btn-import-sync');
+    if (btnImportSync) {
+      btnImportSync.addEventListener('click', () => this.handleImportSync());
+    }
+
+    // Avatar Picker Grid listeners
+    const avatarBtns = document.querySelectorAll('.avatar-option');
+    avatarBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        avatarBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.profile.avatar = btn.getAttribute('data-avatar') || '👤';
+        const preview = document.getElementById('modal-avatar-preview');
+        if (preview) preview.textContent = this.profile.avatar;
+      });
+    });
+
+    this.updateHeaderUI();
+    this.notifyAccountChange();
+  }
+
+  // Check username against slurs & profanity
+  validateUsername(username) {
+    if (!username || username.trim().length < 3) {
+      return { valid: false, message: 'Username must be at least 3 characters long!' };
+    }
+
+    if (username.trim().length > 16) {
+      return { valid: false, message: 'Username cannot exceed 16 characters!' };
+    }
+
+    // Normalize leetspeak (0->o, 1->i, 3->e, 4->a, 5->s, 7->t, @->a, $->s, !->i)
+    let normalized = username.toLowerCase()
+      .replace(/0/g, 'o')
+      .replace(/1/g, 'i')
+      .replace(/!/g, 'i')
+      .replace(/3/g, 'e')
+      .replace(/4/g, 'a')
+      .replace(/@/g, 'a')
+      .replace(/5/g, 's')
+      .replace(/\$/g, 's')
+      .replace(/7/g, 't')
+      .replace(/[^a-z]/g, '');
+
+    for (let slur of this.slurList) {
+      if (normalized.includes(slur)) {
+        return { valid: false, message: '⚠️ Username contains inappropriate words or slurs!' };
+      }
+    }
+
+    return { valid: true };
+  }
+
+  // Load Accounts Database (Local)
+  getAccountsDB() {
+    try {
+      const data = localStorage.getItem(this.dbKey);
+      return data ? JSON.parse(data) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  saveAccountsDB(db) {
+    try {
+      localStorage.setItem(this.dbKey, JSON.stringify(db));
+    } catch (e) {}
+  }
+
+  // Cloud Database Sync Methods (Firebase REST Endpoint)
+  async fetchFromCloudDB(key) {
+    try {
+      const res = await fetch(`https://gamblr-casino-default-rtdb.firebaseio.com/accounts/${key}.json`);
+      if (res.ok) {
+        const data = await res.json();
+        return data;
+      }
+    } catch (e) {
+      console.warn('Cloud DB fetch warning:', e);
+    }
+    return null;
+  }
+
+  async saveToCloudDB(key, accountData) {
+    try {
+      await fetch(`https://gamblr-casino-default-rtdb.firebaseio.com/accounts/${key}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(accountData)
+      });
+    } catch (e) {
+      console.warn('Cloud DB save warning:', e);
+    }
+  }
+
+  async syncStatsToCloud(userKey, gameKey, statsObj) {
+    if (!userKey || userKey === 'guest') return;
+    try {
+      await fetch(`https://gamblr-casino-default-rtdb.firebaseio.com/accounts/${userKey}/stats/${gameKey}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(statsObj)
+      });
+    } catch (e) {}
+  }
+
+  loadSession() {
+    try {
+      const data = localStorage.getItem(this.sessionKey);
+      if (data) {
+        this.profile = Object.assign(this.profile, JSON.parse(data));
+      }
+    } catch (e) {}
+  }
+
+  saveSession() {
+    try {
+      localStorage.setItem(this.sessionKey, JSON.stringify(this.profile));
+    } catch (e) {}
+    this.updateHeaderUI();
+    this.notifyAccountChange();
+  }
+
+  getGameStats(gameKey, defaultStats) {
+    const userKey = this.profile.isLoggedIn ? this.profile.username.toLowerCase() : 'guest';
+    if (this.profile.isLoggedIn) {
+      const db = this.getAccountsDB();
+      if (db[userKey] && db[userKey].stats && db[userKey].stats[gameKey]) {
+        return Object.assign({}, defaultStats, db[userKey].stats[gameKey]);
+      }
+    } else {
+      try {
+        const guestData = localStorage.getItem(`gamblr_guest_stats_${gameKey}`);
+        if (guestData) return Object.assign({}, defaultStats, JSON.parse(guestData));
+      } catch (e) {}
+    }
+    return Object.assign({}, defaultStats);
+  }
+
+  saveGameStats(gameKey, statsObj) {
+    const userKey = this.profile.isLoggedIn ? this.profile.username.toLowerCase() : 'guest';
+    if (this.profile.isLoggedIn) {
+      const db = this.getAccountsDB();
+      if (db[userKey]) {
+        if (!db[userKey].stats) db[userKey].stats = {};
+        db[userKey].stats[gameKey] = statsObj;
+        this.saveAccountsDB(db);
+        // Async Cloud Sync
+        this.syncStatsToCloud(userKey, gameKey, statsObj);
+      }
+    } else {
+      try {
+        localStorage.setItem(`gamblr_guest_stats_${gameKey}`, JSON.stringify(statsObj));
+      } catch (e) {}
+    }
+  }
+
+  notifyAccountChange() {
+    const managers = [
+      window.coinFlipManager,
+      window.magic8BallManager,
+      window.spinWheelManager,
+      window.rouletteManager,
+      window.slotsManager,
+      window.diceManager,
+      window.cookieManager,
+      window.rpsManager,
+      window.cardsManager,
+      window.minesManager,
+      window.plinkoManager,
+      window.raceManager
+    ];
+
+    managers.forEach(mgr => {
+      if (mgr && typeof mgr.loadStats === 'function') {
+        mgr.loadStats();
+        if (typeof mgr.updateStatsUI === 'function') {
+          mgr.updateStatsUI();
+        }
+      }
+    });
+  }
+
+  addXP(amount, clientX, clientY) {
+    if (!this.profile.xp) this.profile.xp = 0;
+    this.profile.xp += amount;
+
+    const currentLevel = Math.floor(Math.sqrt(this.profile.xp / 40)) + 1;
+    const oldLevel = this.profile.level || 1;
+    this.profile.level = currentLevel;
+
+    if (currentLevel > oldLevel) {
+      this.showAlert(`🎉 LEVEL UP! You reached Level ${currentLevel}!`, false);
+      if (window.soundEngine && window.soundEngine.playCoinWin) {
+        window.soundEngine.playCoinWin();
+      }
+    }
+
+    this.saveSession();
+    this.updateHeaderUI();
+
+    if (clientX && clientY) {
+      this.spawnXPPopup(`+${amount} XP`, clientX, clientY);
+    }
+  }
+
+  spawnXPPopup(text, x, y) {
+    const pop = document.createElement('div');
+    pop.className = 'xp-floating-popup';
+    pop.textContent = text;
+    pop.style.left = `${x}px`;
+    pop.style.top = `${y}px`;
+    document.body.appendChild(pop);
+    setTimeout(() => pop.remove(), 1200);
+  }
+
+  updateHeaderUI() {
+    if (this.avatarDisplay) this.avatarDisplay.textContent = this.profile.avatar;
+    if (this.nameDisplay) {
+      this.nameDisplay.textContent = this.profile.username;
+    }
+
+    const lvlText = document.getElementById('user-level-text');
+    const xpBar = document.getElementById('user-xp-bar');
+    if (lvlText) lvlText.textContent = `LVL ${this.profile.level || 1}`;
+    if (xpBar) {
+      const currentXP = this.profile.xp || 0;
+      const currentLvl = this.profile.level || 1;
+      const prevLvlXP = Math.pow(currentLvl - 1, 2) * 40;
+      const nextLvlXP = Math.pow(currentLvl, 2) * 40;
+      const pct = Math.min(100, Math.max(0, ((currentXP - prevLvlXP) / (nextLvlXP - prevLvlXP)) * 100));
+      xpBar.style.width = `${pct}%`;
+    }
+  }
+
+  showAlert(message, isError = true) {
+    const alertBox = document.getElementById('auth-alert-box');
+    if (alertBox) {
+      alertBox.textContent = message;
+      alertBox.className = `auth-alert-box ${isError ? 'alert-error' : 'alert-success'}`;
+      alertBox.classList.remove('hidden');
+    }
+  }
+
+  clearAlert() {
+    const alertBox = document.getElementById('auth-alert-box');
+    if (alertBox) {
+      alertBox.classList.add('hidden');
+    }
+  }
+
+  async handleRegister() {
+    this.clearAlert();
+    const userIn = document.getElementById('reg-username');
+    const passIn = document.getElementById('reg-password');
+    const passConf = document.getElementById('reg-password-confirm');
+
+    const username = userIn ? userIn.value.trim() : '';
+    const password = passIn ? passIn.value : '';
+    const confirm = passConf ? passConf.value : '';
+
+    // 1. Validate username profanity & slurs
+    const valResult = this.validateUsername(username);
+    if (!valResult.valid) {
+      this.showAlert(valResult.message, true);
+      return;
+    }
+
+    if (username.toLowerCase() === 'guest') {
+      this.showAlert('Cannot use "Guest" as a registered account name!', true);
+      return;
+    }
+
+    if (!password || password.length < 4) {
+      this.showAlert('Password must be at least 4 characters long!', true);
+      return;
+    }
+
+    if (password !== confirm) {
+      this.showAlert('Passwords do not match!', true);
+      return;
+    }
+
+    this.showAlert('⏳ Checking username availability on Cloud...', false);
+
+    // 2. Check if username taken locally OR on Cloud
+    const db = this.getAccountsDB();
+    const key = username.toLowerCase();
+
+    if (db[key]) {
+      this.showAlert(`⚠️ The username "${username}" is already taken! Please choose another.`, true);
+      return;
+    }
+
+    const cloudCheck = await this.fetchFromCloudDB(key);
+    if (cloudCheck) {
+      this.showAlert(`⚠️ The username "${username}" is already registered on Cloud! Please choose another.`, true);
+      return;
+    }
+
+    // 3. Register user account locally & on Cloud
+    const accountData = {
+      username: username,
+      password: password,
+      avatar: this.profile.avatar || '👤',
+      createdAt: new Date().toISOString(),
+      stats: {}
+    };
+
+    db[key] = accountData;
+    this.saveAccountsDB(db);
+    await this.saveToCloudDB(key, accountData);
+
+    // 4. Log in new user
+    this.profile.username = username;
+    this.profile.isLoggedIn = true;
+    this.saveSession();
+
+    this.showAlert(`🎉 Account created & synced to Cloud! Welcome, ${username}.`, false);
+    setTimeout(() => {
+      this.closeModal();
+    }, 1200);
+  }
+
+  async handleLogin() {
+    this.clearAlert();
+    const userIn = document.getElementById('login-username');
+    const passIn = document.getElementById('login-password');
+
+    const username = userIn ? userIn.value.trim() : '';
+    const password = passIn ? passIn.value : '';
+
+    if (!username || !password) {
+      this.showAlert('Please enter both username and password!', true);
+      return;
+    }
+
+    this.showAlert('⏳ Logging in & Syncing from Cloud...', false);
+
+    const db = this.getAccountsDB();
+    const key = username.toLowerCase();
+    let account = db[key];
+
+    // If not found locally, fetch from Cloud DB
+    if (!account) {
+      const cloudAccount = await this.fetchFromCloudDB(key);
+      if (cloudAccount) {
+        account = cloudAccount;
+        db[key] = cloudAccount;
+        this.saveAccountsDB(db);
+      }
+    } else {
+      // Sync latest cloud stats if available
+      const cloudAccount = await this.fetchFromCloudDB(key);
+      if (cloudAccount && cloudAccount.password === password) {
+        account = cloudAccount;
+        db[key] = cloudAccount;
+        this.saveAccountsDB(db);
+      }
+    }
+
+    if (!account || account.password !== password) {
+      this.showAlert('Invalid username or password!', true);
+      return;
+    }
+
+    // Successful login
+    this.profile.username = account.username;
+    this.profile.avatar = account.avatar || '👑';
+    this.profile.isLoggedIn = true;
+    this.saveSession();
+
+    this.showAlert(`⚡ Logged in successfully via Cloud Sync! Welcome back, ${account.username}.`, false);
+    setTimeout(() => {
+      this.closeModal();
+    }, 1000);
+  }
+
+  setGuestMode() {
+    this.profile.username = 'Guest';
+    this.profile.avatar = '👤';
+    this.profile.isLoggedIn = false;
+    this.saveSession();
+    this.showAlert('Playing as Guest.', false);
+    setTimeout(() => {
+      this.closeModal();
+    }, 800);
+  }
+
+  saveAvatarOnly() {
+    if (this.profile.isLoggedIn) {
+      const db = this.getAccountsDB();
+      const key = this.profile.username.toLowerCase();
+      if (db[key]) {
+        db[key].avatar = this.profile.avatar;
+        this.saveAccountsDB(db);
+      }
+    }
+    this.saveSession();
+    this.showAlert('Avatar updated!', false);
+    setTimeout(() => {
+      this.closeModal();
+    }, 800);
+  }
+
+  handleExportSync() {
+    if (!this.profile.isLoggedIn) {
+      this.showAlert('Please log in to export your account sync code!', true);
+      return;
+    }
+
+    const db = this.getAccountsDB();
+    const userKey = this.profile.username.toLowerCase();
+    const accountObj = db[userKey];
+
+    if (!accountObj) {
+      this.showAlert('Account data not found!', true);
+      return;
+    }
+
+    try {
+      const jsonStr = JSON.stringify(accountObj);
+      const b64 = btoa(encodeURIComponent(jsonStr));
+      const syncToken = `GAMBLR-SYNC-${b64}`;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(syncToken).then(() => {
+          this.showAlert('📋 Sync key copied to clipboard! Paste it on your second device.', false);
+        }).catch(() => {
+          prompt('Copy your Device Sync Key below:', syncToken);
+        });
+      } else {
+        prompt('Copy your Device Sync Key below:', syncToken);
+      }
+    } catch (e) {
+      this.showAlert('Failed to generate sync code!', true);
+    }
+  }
+
+  handleImportSync() {
+    const input = document.getElementById('import-sync-code');
+    const rawVal = input ? input.value.trim() : '';
+
+    if (!rawVal) {
+      this.showAlert('Please paste a GAMBLR-SYNC- code first!', true);
+      return;
+    }
+
+    if (!rawVal.startsWith('GAMBLR-SYNC-')) {
+      this.showAlert('Invalid Sync Code format! Must start with "GAMBLR-SYNC-"', true);
+      return;
+    }
+
+    try {
+      const b64 = rawVal.replace('GAMBLR-SYNC-', '').trim();
+      const jsonStr = decodeURIComponent(atob(b64));
+      const accountData = JSON.parse(jsonStr);
+
+      if (!accountData.username || !accountData.password) {
+        this.showAlert('Corrupted or invalid Sync Code!', true);
+        return;
+      }
+
+      const db = this.getAccountsDB();
+      const userKey = accountData.username.toLowerCase();
+      db[userKey] = accountData;
+      this.saveAccountsDB(db);
+
+      // Async Cloud sync push so it's backed up on cloud database too
+      this.saveToCloudDB(userKey, accountData);
+
+      // Log in
+      this.profile.username = accountData.username;
+      this.profile.avatar = accountData.avatar || '👑';
+      this.profile.isLoggedIn = true;
+      this.saveSession();
+
+      this.showAlert(`🎉 Account & Stats imported! Welcome, ${accountData.username}!`, false);
+      if (input) input.value = '';
+      setTimeout(() => {
+        this.closeModal();
+      }, 1000);
+    } catch (e) {
+      this.showAlert('Failed to import Sync Code. Check that the full code was pasted.', true);
+    }
+  }
+
+  openModal() {
+    if (!this.modal) return;
+    this.clearAlert();
+
+    const title = document.getElementById('modal-username-title');
+    const badge = document.getElementById('modal-user-badge');
+    const preview = document.getElementById('modal-avatar-preview');
+
+    if (title) title.textContent = this.profile.username;
+    if (preview) preview.textContent = this.profile.avatar;
+
+    if (badge) {
+      if (this.profile.isLoggedIn) {
+        badge.textContent = 'HIGH ROLLER ACCOUNT';
+        badge.className = 'badge-logged-in';
+      } else {
+        badge.textContent = 'GUEST MODE';
+        badge.className = 'badge-guest';
+      }
+    }
+
+    // Highlight active tab
+    const defaultTab = this.profile.isLoggedIn ? 'profile' : 'login';
+    const tabBtns = document.querySelectorAll('.auth-tab-btn');
+    tabBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-tab') === defaultTab);
+    });
+
+    document.querySelectorAll('.auth-tab-view').forEach(v => {
+      v.classList.toggle('active', v.id === `auth-view-${defaultTab}`);
+    });
+
+    // Highlight current avatar
+    const avatarBtns = document.querySelectorAll('.avatar-option');
+    avatarBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-avatar') === this.profile.avatar);
+    });
+
+    this.modal.classList.remove('hidden');
+  }
+
+  closeModal() {
+    if (this.modal) this.modal.classList.add('hidden');
+  }
+}
+
+window.profileManager = new ProfileManager();

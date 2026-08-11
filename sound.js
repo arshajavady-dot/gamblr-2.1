@@ -6,28 +6,31 @@ class SoundEngine {
   constructor() {
     this.audioCtx = null;
     this.isMuted = false;
-    this.bgAudio = new Audio('bg-music.mp3.mp3');
+    this.unlocked = false;
+    this.bgAudio = document.getElementById('bg-music-element') || new Audio('bg-music.mp3.mp3');
     this.bgAudio.loop = true;
     this.bgAudio.volume = 0.35;
+    
+    // Set mobile compatibility attributes
+    this.bgAudio.setAttribute('playsinline', '');
+    this.bgAudio.setAttribute('webkit-playsinline', '');
 
-    // Try playing immediately on load
-    this.tryPlay();
-
-    // Attach global unlock listeners for ANY click, tap, or key press anywhere on the screen
-    const unlock = () => {
+    // Attach mobile touch & gesture event listeners for instant audio unlock
+    const unlockMobile = () => {
       this.init();
     };
-    window.addEventListener('click', unlock);
-    window.addEventListener('keydown', unlock);
-    window.addEventListener('pointerdown', unlock);
-    window.addEventListener('touchstart', unlock);
+
+    ['touchstart', 'touchend', 'pointerdown', 'click', 'keydown'].forEach(evt => {
+      window.addEventListener(evt, unlockMobile, { passive: true });
+    });
   }
 
   tryPlay() {
-    if (!this.isMuted && this.bgAudio.paused) {
-      this.bgAudio.play().catch(() => {
-        // Autoplay policy blocked; will unlock on first user click/touch
-      });
+    if (!this.isMuted && this.bgAudio && this.bgAudio.paused) {
+      const p = this.bgAudio.play();
+      if (p !== undefined) {
+        p.catch(() => {});
+      }
     }
   }
 
@@ -38,10 +41,23 @@ class SoundEngine {
         this.audioCtx = new AudioContext();
       }
     }
+
     if (this.audioCtx && this.audioCtx.state === 'suspended') {
       this.audioCtx.resume();
     }
-    
+
+    // Mobile Web Audio unlock trick: play 1 frame of silent buffer inside user gesture
+    if (this.audioCtx && !this.unlocked) {
+      try {
+        const buffer = this.audioCtx.createBuffer(1, 1, 22050);
+        const source = this.audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(this.audioCtx.destination);
+        source.start(0);
+        this.unlocked = true;
+      } catch (e) {}
+    }
+
     this.tryPlay();
   }
 
@@ -412,6 +428,74 @@ class SoundEngine {
     osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
 
     gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.04);
+  }
+
+  playEnterCasino() {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.audioCtx) return;
+
+    const now = this.audioCtx.currentTime;
+
+    // 1. Ascending futuristic chord (C5 -> E5 -> G5 -> C6)
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, i) => {
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + i * 0.07);
+
+      gain.gain.setValueAtTime(0, now + i * 0.07);
+      gain.gain.linearRampToValueAtTime(0.2, now + i * 0.07 + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.7);
+
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+
+      osc.start(now + i * 0.07);
+      osc.stop(now + i * 0.07 + 0.7);
+    });
+
+    // 2. Sub-bass power drop
+    const subOsc = this.audioCtx.createOscillator();
+    const subGain = this.audioCtx.createGain();
+
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(160, now);
+    subOsc.frequency.exponentialRampToValueAtTime(45, now + 0.5);
+
+    subGain.gain.setValueAtTime(0.35, now);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+    subOsc.connect(subGain);
+    subGain.connect(this.audioCtx.destination);
+
+    subOsc.start(now);
+    subOsc.stop(now + 0.6);
+  }
+
+  playTabSwitch() {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.audioCtx) return;
+
+    const now = this.audioCtx.currentTime;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1400, now);
+    osc.frequency.exponentialRampToValueAtTime(700, now + 0.04);
+
+    gain.gain.setValueAtTime(0.12, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
 
     osc.connect(gain);

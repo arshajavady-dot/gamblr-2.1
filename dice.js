@@ -4,6 +4,14 @@
 
 class DiceManager {
   constructor() {
+    this.diceCount = 1;
+    this.isRolling = false;
+    
+    this.totalRolls = 0;
+    this.grandSum = 0;
+  }
+
+  init() {
     this.stage = document.getElementById('dice-stage');
     this.btnRoll = document.getElementById('btn-roll-dice');
     this.btnReset = document.getElementById('btn-reset-dice-stats');
@@ -16,14 +24,7 @@ class DiceManager {
     this.statSum = document.getElementById('stat-dice-sum');
     this.statAvg = document.getElementById('stat-dice-avg');
 
-    this.diceCount = 1;
-    this.isRolling = false;
-    
-    this.totalRolls = 0;
-    this.grandSum = 0;
-  }
-
-  init() {
+    this.loadStats();
     if (!this.stage || !this.btnRoll) return;
 
     this.btnRoll.addEventListener('click', () => this.roll());
@@ -129,20 +130,44 @@ class DiceManager {
     this.resultBanner.classList.add('win');
 
     if (window.soundEngine) window.soundEngine.playCoinWin();
+    if (window.profileManager) window.profileManager.addXP(Math.round(20 * sum), window.innerWidth / 2, window.innerHeight / 2);
 
+    this.saveStats();
     this.updateStats();
     this.addToHistory(results, sum);
   }
 
+  saveStats() {
+    if (window.profileManager) {
+      window.profileManager.saveGameStats('dice', { totalRolls: this.totalRolls, grandSum: this.grandSum });
+    } else {
+      localStorage.setItem('gamblr_dice_stats', JSON.stringify({ totalRolls: this.totalRolls, grandSum: this.grandSum }));
+    }
+  }
+
+  loadStats() {
+    const defaultData = { totalRolls: 0, grandSum: 0 };
+    if (window.profileManager) {
+      const saved = window.profileManager.getGameStats('dice', defaultData);
+      this.totalRolls = saved.totalRolls || 0;
+      this.grandSum = saved.grandSum || 0;
+    }
+  }
+
+  updateStatsUI() {
+    this.updateStats();
+  }
+
   updateStats() {
-    this.statRolls.textContent = this.totalRolls;
-    this.statSum.textContent = this.grandSum;
+    if (this.statRolls) this.statRolls.textContent = this.totalRolls;
+    if (this.statSum) this.statSum.textContent = this.grandSum;
     
     const avg = this.totalRolls === 0 ? 0 : (this.grandSum / this.totalRolls).toFixed(1);
-    this.statAvg.textContent = avg;
+    if (this.statAvg) this.statAvg.textContent = avg;
   }
 
   addToHistory(results, sum) {
+    if (!this.historyList) return;
     const pill = document.createElement('div');
     pill.className = 'history-pill win';
     pill.innerHTML = `
@@ -164,10 +189,13 @@ class DiceManager {
   resetStats() {
     this.totalRolls = 0;
     this.grandSum = 0;
+    this.saveStats();
     this.updateStats();
-    this.historyList.innerHTML = '<span class="empty-msg">No rolls yet</span>';
-    this.resultText.textContent = 'TOTAL: 0';
-    this.resultText.style.color = '#00b4d8';
+    if (this.historyList) this.historyList.innerHTML = '<span class="empty-msg">No rolls yet</span>';
+    if (this.resultText) {
+      this.resultText.textContent = 'TOTAL: 0';
+      this.resultText.style.color = '#00b4d8';
+    }
   }
 }
 

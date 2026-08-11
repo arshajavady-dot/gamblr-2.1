@@ -2,6 +2,10 @@
    gamblr - Main App Coordinator & View Router
    ========================================================================== */
 
+let currentTabIndex = 0;
+let isSwiping = false;
+const TAB_ORDER = ['coin', '8ball', 'wheel', 'roulette', 'slots', 'dice', 'cookie', 'rps', 'cards', 'mines', 'plinko', 'race'];
+
 function switchTab(target) {
   const tabs = {
     coin: document.getElementById('tab-coin'),
@@ -33,15 +37,51 @@ function switchTab(target) {
     home: document.getElementById('view-home'),
   };
 
+  const newIndex = TAB_ORDER.indexOf(target);
+  const direction = newIndex >= currentTabIndex ? 'left' : 'right';
+  if (newIndex >= 0) currentTabIndex = newIndex;
+
   Object.values(tabs).forEach(t => {
     if (t) { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); }
   });
-  Object.values(views).forEach(v => {
-    if (v) v.classList.remove('active');
-  });
-
   if (tabs[target]) { tabs[target].classList.add('active'); tabs[target].setAttribute('aria-selected', 'true'); }
-  if (views[target]) views[target].classList.add('active');
+
+  // Sequential 2-Phase 3D Swipe Animation (Current mode wipes 100% off screen first)
+  const currentActiveView = document.querySelector('.view-panel.active');
+  const targetView = views[target];
+
+  if (currentActiveView && targetView && currentActiveView !== targetView) {
+    if (isSwiping) return;
+    isSwiping = true;
+
+    const outClass = direction === 'left' ? 'swipe-out-left' : 'swipe-out-right';
+    const inClass = direction === 'left' ? 'swipe-in-right' : 'swipe-in-left';
+
+    // Phase 1: Swipe active mode completely off screen
+    currentActiveView.classList.add(outClass);
+
+    setTimeout(() => {
+      // Phase 2: Hide old view, show target view, and swipe it in
+      currentActiveView.classList.remove('active', 'swipe-out-left', 'swipe-out-right');
+
+      targetView.classList.remove('swipe-out-left', 'swipe-out-right');
+      targetView.classList.add('active', inClass);
+
+      setTimeout(() => {
+        targetView.classList.remove('swipe-in-left', 'swipe-in-right');
+        isSwiping = false;
+      }, 220);
+    }, 220);
+  } else {
+    Object.values(views).forEach(v => {
+      if (v) v.classList.remove('active');
+    });
+    if (targetView) targetView.classList.add('active');
+  }
+
+  if (window.soundEngine && window.soundEngine.playTabSwitch) {
+    window.soundEngine.playTabSwitch();
+  }
 
   if (target === 'wheel') {
     requestAnimationFrame(() => {
@@ -60,6 +100,7 @@ window.switchTab = switchTab;
 
 document.addEventListener('DOMContentLoaded', () => {
   if (window.soundEngine) window.soundEngine.init();
+  if (window.profileManager) window.profileManager.init();
   if (window.coinFlipManager) window.coinFlipManager.init();
   if (window.magic8BallManager) window.magic8BallManager.init();
   if (window.spinWheelManager) window.spinWheelManager.init();
@@ -101,16 +142,21 @@ document.addEventListener('DOMContentLoaded', () => {
   if (tabRace) tabRace.addEventListener('click', () => switchTab('race'));
 
   const btnSound = document.getElementById('btn-sound');
-  const iconOn = document.getElementById('sound-icon-on');
-  const iconOff = document.getElementById('sound-icon-off');
+
+  const updateDiscState = () => {
+    if (!btnSound || !window.soundEngine) return;
+    const isMuted = window.soundEngine.isMuted;
+    btnSound.classList.toggle('playing', !isMuted);
+    btnSound.classList.toggle('muted', isMuted);
+    btnSound.setAttribute('title', isMuted ? 'Sound Muted (Click to Unmute)' : 'Sound Playing (Click to Mute)');
+    btnSound.innerHTML = `<span class="disc-icon">${isMuted ? '🔇' : '🎵'}</span>`;
+  };
 
   if (btnSound) {
     btnSound.addEventListener('click', () => {
       if (window.soundEngine) {
-        const isMuted = window.soundEngine.toggleMute();
-        iconOn.classList.toggle('hidden', isMuted);
-        iconOff.classList.toggle('hidden', !isMuted);
-        btnSound.setAttribute('title', isMuted ? 'Sound Muted' : 'Sound On');
+        window.soundEngine.toggleMute();
+        updateDiscState();
       }
     });
   }
@@ -176,7 +222,163 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(updateSlider, 100);
   }
 
-  console.log('⚡ gamblr initialized with 8 modes: Coin Flip, Magic 8-Ball, Spin Wheel, Roulette Predictor, Slot Machine, Dice Roller, Fortune Cookie, Rock Paper Scissors, Higher or Lower.');
+  // Futuristic Splash Screen Intro Controller
+  const splashScreen = document.getElementById('splash-screen');
+  const splashProgress = document.getElementById('splash-progress');
+  const splashStatus = document.getElementById('splash-status-text');
+  const btnEnterCasino = document.getElementById('btn-enter-casino');
+  const splashLoaderBox = document.querySelector('.splash-loader-box');
+
+  if (splashScreen && splashProgress && splashStatus) {
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.floor(Math.random() * 15) + 10;
+      if (progress > 100) progress = 100;
+      splashProgress.style.width = progress + '%';
+
+      if (progress < 40) {
+        splashStatus.textContent = 'INITIALIZING QUANTUM CORE...';
+      } else if (progress < 75) {
+        splashStatus.textContent = 'CONNECTING CASINO AUDIO ENGINE...';
+      } else if (progress < 100) {
+        splashStatus.textContent = 'PREPARING 11 HIGH-STAKES MODES...';
+      } else {
+        clearInterval(interval);
+        splashStatus.textContent = 'SYSTEM READY.';
+        if (btnEnterCasino && splashLoaderBox) {
+          splashLoaderBox.style.display = 'none';
+          btnEnterCasino.classList.remove('hidden');
+        }
+      }
+    }, 70);
+
+    const enterApp = () => {
+      if (window.soundEngine) {
+        window.soundEngine.init();
+        if (window.soundEngine.playEnterCasino) {
+          window.soundEngine.playEnterCasino();
+        }
+      }
+      updateDiscState();
+      splashScreen.classList.add('fade-out');
+      setTimeout(() => {
+        splashScreen.remove();
+      }, 800);
+    };
+
+    if (btnEnterCasino) {
+      btnEnterCasino.addEventListener('click', enterApp);
+    }
+  }
+
+  // 1. Ambient Interactive Cyber Particle Field
+  const canvas = document.getElementById('bg-particle-canvas');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const particles = [];
+    const count = 45;
+    let mouse = { x: width / 2, y: height / 2 };
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.8,
+        vy: (Math.random() - 0.5) * 0.8,
+        radius: Math.random() * 2 + 1,
+        color: Math.random() > 0.5 ? '#00ff9d' : '#00b4d8'
+      });
+    }
+
+    const drawParticles = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0 || p.x > width) p.vx *= -1;
+        if (p.y < 0 || p.y > height) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = 0.4;
+        ctx.fill();
+
+        // Draw connections to nearby particles
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+          if (dist < 120) {
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = p.color;
+            ctx.globalAlpha = (1 - dist / 120) * 0.15;
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
+        }
+
+        // Draw connection to cursor
+        const distMouse = Math.hypot(p.x - mouse.x, p.y - mouse.y);
+        if (distMouse < 150) {
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(mouse.x, mouse.y);
+          ctx.strokeStyle = '#00ff9d';
+          ctx.globalAlpha = (1 - distMouse / 150) * 0.3;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1.0;
+      requestAnimationFrame(drawParticles);
+    };
+
+    drawParticles();
+  }
+
+  // 2. 3D Holographic Card Mouse Tilt Effect
+  const tiltableCards = document.querySelectorAll('.game-card, .stats-panel, .card-glass');
+  tiltableCards.forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      const rotateX = ((y - centerY) / centerY) * -6; // max 6 deg
+      const rotateY = ((x - centerX) / centerX) * 6;  // max 6 deg
+
+      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`;
+      card.style.transition = 'transform 0.08s ease-out';
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0)';
+      card.style.transition = 'transform 0.4s ease';
+    });
+  });
+
+  console.log('⚡ gamblr initialized with 3D Parallax Tilt, Cyber Particle Field, Level XP System, and 12 High-Stakes Modes.');
 });
 
 

@@ -63,6 +63,7 @@ class Magic8BallManager {
   }
 
   init() {
+    this.loadStats();
     this.bindEvents();
     this.updateStatsUI();
   }
@@ -158,7 +159,10 @@ class Magic8BallManager {
 
   processResult(chosen, questionText) {
     this.stats.total++;
-    if (chosen.type === 'Affirmative') this.stats.affirmative++;
+    if (chosen.type === 'Affirmative') {
+      this.stats.affirmative++;
+      if (window.profileManager) window.profileManager.addXP(30, window.innerWidth / 2, window.innerHeight / 2);
+    }
     else if (chosen.type === 'Non-committal') this.stats.nonCommittal++;
     else if (chosen.type === 'Negative') this.stats.negative++;
 
@@ -203,16 +207,30 @@ class Magic8BallManager {
   }
 
   saveStats() {
-    localStorage.setItem('gamblr_8ball_stats', JSON.stringify(this.stats));
+    if (window.profileManager) {
+      window.profileManager.saveGameStats('8ball', this.stats);
+    } else {
+      localStorage.setItem('gamblr_8ball_stats', JSON.stringify(this.stats));
+    }
   }
 
   loadStats() {
-    const saved = localStorage.getItem('gamblr_8ball_stats');
-    if (saved) {
-      try {
-        this.stats = Object.assign(this.stats, JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to load 8ball stats', e);
+    const defaultStats = {
+      total: 0,
+      affirmative: 0,
+      nonCommittal: 0,
+      negative: 0,
+      history: []
+    };
+
+    if (window.profileManager) {
+      this.stats = window.profileManager.getGameStats('8ball', defaultStats);
+    } else {
+      const saved = localStorage.getItem('gamblr_8ball_stats');
+      if (saved) {
+        try {
+          this.stats = Object.assign(defaultStats, JSON.parse(saved));
+        } catch (e) {}
       }
     }
   }

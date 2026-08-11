@@ -4,18 +4,6 @@
 
 class PlinkoManager {
   constructor() {
-    this.canvas = document.getElementById('plinko-canvas');
-    this.btnDrop = document.getElementById('btn-plinko-drop');
-    this.btnDrop5 = document.getElementById('btn-plinko-drop5');
-    
-    this.resultBanner = document.getElementById('plinko-result-banner');
-    this.resultText = document.getElementById('plinko-result-text');
-    this.historyList = document.getElementById('plinko-history-list');
-
-    this.statDrops = document.getElementById('stat-plinko-drops');
-    this.statBest = document.getElementById('stat-plinko-best');
-    this.btnReset = document.getElementById('btn-reset-plinko-stats');
-
     this.ctx = null;
     this.pegs = [];
     this.buckets = [];
@@ -34,6 +22,20 @@ class PlinkoManager {
   }
 
   init() {
+    this.canvas = document.getElementById('plinko-canvas');
+    this.btnDrop = document.getElementById('btn-plinko-drop');
+    this.btnDrop5 = document.getElementById('btn-plinko-drop5');
+    
+    this.resultBanner = document.getElementById('plinko-result-banner');
+    this.resultText = document.getElementById('plinko-result-text');
+    this.historyList = document.getElementById('plinko-history-list');
+
+    this.statDrops = document.getElementById('stat-plinko-drops');
+    this.statBest = document.getElementById('stat-plinko-best');
+    this.btnReset = document.getElementById('btn-reset-plinko-stats');
+
+    this.loadStats();
+    this.updateStatsUI();
     if (!this.canvas) return;
     this.ctx = this.canvas.getContext('2d');
 
@@ -206,12 +208,32 @@ class PlinkoManager {
     this.resultText.style.color = bucket.color;
     this.resultBanner.className = 'result-banner active ' + (mult >= 1.5 ? 'win' : 'lose');
 
-    if (mult >= 1.5 && window.soundEngine) {
-      window.soundEngine.playCoinWin();
+    if (mult >= 1.5) {
+      if (window.soundEngine) window.soundEngine.playCoinWin();
+      if (window.profileManager) window.profileManager.addXP(Math.round(30 * mult), window.innerWidth / 2, window.innerHeight / 2);
     }
-
+    this.saveStats();
     this.updateStats();
     this.addToHistory(mult, bucket.color);
+  }
+
+  saveStats() {
+    if (window.profileManager) {
+      window.profileManager.saveGameStats('plinko', { totalDrops: this.totalDrops, bestWin: this.bestWin });
+    }
+  }
+
+  loadStats() {
+    const defaultData = { totalDrops: 0, bestWin: 0 };
+    if (window.profileManager) {
+      const saved = window.profileManager.getGameStats('plinko', defaultData);
+      this.totalDrops = saved.totalDrops || 0;
+      this.bestWin = saved.bestWin || 0;
+    }
+  }
+
+  updateStatsUI() {
+    this.updateStats();
   }
 
   draw() {
@@ -277,6 +299,7 @@ class PlinkoManager {
   }
 
   addToHistory(mult, color) {
+    if (!this.historyList) return;
     const pill = document.createElement('div');
     pill.className = `history-pill ${mult >= 1.5 ? 'win' : 'lose'}`;
     pill.innerHTML = `
@@ -299,9 +322,10 @@ class PlinkoManager {
     this.bestWin = 0;
     this.balls = [];
     this.particles = [];
+    this.saveStats();
     this.updateStats();
-    this.historyList.innerHTML = '<span class="empty-msg">No drops yet</span>';
-    this.resultBanner.className = 'result-banner';
+    if (this.historyList) this.historyList.innerHTML = '<span class="empty-msg">No drops yet</span>';
+    if (this.resultBanner) this.resultBanner.className = 'result-banner';
   }
 }
 

@@ -4,22 +4,6 @@
 
 class CardsManager {
   constructor() {
-    this.btnHigher = document.getElementById('btn-cards-higher');
-    this.btnLower = document.getElementById('btn-cards-lower');
-    this.btnStart = document.getElementById('btn-cards-start');
-    
-    this.cardContainer = document.getElementById('cards-display-container');
-    this.currentCardElement = document.getElementById('cards-current-card');
-    
-    this.resultBanner = document.getElementById('cards-result-banner');
-    this.resultText = document.getElementById('cards-result-text');
-    this.historyList = document.getElementById('cards-history-list');
-
-    this.statStreak = document.getElementById('stat-cards-streak');
-    this.statBestStreak = document.getElementById('stat-cards-best');
-    this.statGames = document.getElementById('stat-cards-games');
-    this.btnReset = document.getElementById('btn-reset-cards-stats');
-
     this.streak = 0;
     this.bestStreak = 0;
     this.gamesPlayed = 0;
@@ -47,6 +31,24 @@ class CardsManager {
   }
 
   init() {
+    this.btnHigher = document.getElementById('btn-cards-higher');
+    this.btnLower = document.getElementById('btn-cards-lower');
+    this.btnStart = document.getElementById('btn-cards-start');
+    
+    this.cardContainer = document.getElementById('cards-display-container');
+    this.currentCardElement = document.getElementById('cards-current-card');
+    
+    this.resultBanner = document.getElementById('cards-result-banner');
+    this.resultText = document.getElementById('cards-result-text');
+    this.historyList = document.getElementById('cards-history-list');
+
+    this.statStreak = document.getElementById('stat-cards-streak');
+    this.statBestStreak = document.getElementById('stat-cards-best');
+    this.statGames = document.getElementById('stat-cards-games');
+    this.btnReset = document.getElementById('btn-reset-cards-stats');
+
+    this.loadStats();
+    this.updateStatsUI();
     if (!this.cardContainer) return;
     
     if (this.btnHigher) this.btnHigher.addEventListener('click', () => this.guess('higher'));
@@ -134,6 +136,7 @@ class CardsManager {
       this.resultBanner.className = 'result-banner active win';
       
       if (window.soundEngine) window.soundEngine.playCoinWin();
+      if (window.profileManager) window.profileManager.addXP(50, window.innerWidth / 2, window.innerHeight / 2);
       
       this.addToHistory(choice, oldCard, newCard, true);
       
@@ -159,10 +162,32 @@ class CardsManager {
       this.btnLower.disabled = false;
     }
     
+    this.saveStats();
+    this.updateStats();
+  }
+
+  saveStats() {
+    if (window.profileManager) {
+      window.profileManager.saveGameStats('cards', { streak: this.streak, bestStreak: this.bestStreak, gamesPlayed: this.gamesPlayed });
+    }
+  }
+
+  loadStats() {
+    const defaultData = { streak: 0, bestStreak: 0, gamesPlayed: 0 };
+    if (window.profileManager) {
+      const saved = window.profileManager.getGameStats('cards', defaultData);
+      this.streak = saved.streak || 0;
+      this.bestStreak = saved.bestStreak || 0;
+      this.gamesPlayed = saved.gamesPlayed || 0;
+    }
+  }
+
+  updateStatsUI() {
     this.updateStats();
   }
 
   renderCard(el, cardObj) {
+    if (!el) return;
     el.innerHTML = `
       <div class="card-inner ${cardObj.color}">
         <div class="card-top">${cardObj.name} ${cardObj.suit}</div>
@@ -173,12 +198,13 @@ class CardsManager {
   }
 
   updateStats() {
-    this.statStreak.textContent = this.streak;
-    this.statBestStreak.textContent = this.bestStreak;
-    this.statGames.textContent = this.gamesPlayed;
+    if (this.statStreak) this.statStreak.textContent = this.streak;
+    if (this.statBestStreak) this.statBestStreak.textContent = this.bestStreak;
+    if (this.statGames) this.statGames.textContent = this.gamesPlayed;
   }
 
   addToHistory(choice, oldCard, newCard, won) {
+    if (!this.historyList) return;
     const pill = document.createElement('div');
     pill.className = `history-pill ${won ? 'win' : 'lose'}`;
     
@@ -202,8 +228,9 @@ class CardsManager {
     this.bestStreak = 0;
     this.gamesPlayed = 0;
     if (!this.isPlaying) this.streak = 0;
+    this.saveStats();
     this.updateStats();
-    this.historyList.innerHTML = '<span class="empty-msg">No history</span>';
+    if (this.historyList) this.historyList.innerHTML = '<span class="empty-msg">No history</span>';
   }
 }
 
