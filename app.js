@@ -354,31 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
     drawParticles();
   }
 
-  // 2. 3D Holographic Card Mouse Tilt Effect
-  const tiltableCards = document.querySelectorAll('.game-card, .stats-panel, .card-glass');
-  tiltableCards.forEach(card => {
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-
-      const rotateX = ((y - centerY) / centerY) * -6; // max 6 deg
-      const rotateY = ((x - centerX) / centerX) * 6;  // max 6 deg
-
-      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`;
-      card.style.transition = 'transform 0.08s ease-out';
-    });
-
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0)';
-      card.style.transition = 'transform 0.4s ease';
-    });
-  });
-
-  console.log('⚡ gamblr initialized with 3D Parallax Tilt, Cyber Particle Field, Level XP System, and 12 High-Stakes Modes.');
+  console.log('⚡ gamblr initialized with Cyber Particle Field, Level XP System, and 12 High-Stakes Modes.');
 });
 
 

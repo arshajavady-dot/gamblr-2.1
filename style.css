@@ -857,26 +857,25 @@ body {
 .main-content {
   flex: 1;
   position: relative;
-  overflow: hidden;
-  perspective: 1200px;
+  overflow: visible;
 }
 
 .view-panel {
   display: none;
   grid-template-columns: 1fr 380px;
   gap: 1.75rem;
+  width: 100%;
   will-change: transform, opacity;
-  transform-style: preserve-3d;
 }
 
 .view-panel.active {
   display: grid;
 }
 
-/* Mode Switch 3D Cyber Swipe Animations (2-Phase Complete Off-Screen Exit) */
+/* Mode Switch Butter-Smooth Cyber Swipe Animations (No Clipping) */
 .view-panel.swipe-out-left {
   display: grid !important;
-  animation: swipeOutLeft 0.22s cubic-bezier(0.4, 0.0, 1, 1) forwards;
+  animation: swipeOutLeft 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 .view-panel.swipe-in-right {
@@ -886,7 +885,7 @@ body {
 
 .view-panel.swipe-out-right {
   display: grid !important;
-  animation: swipeOutRight 0.22s cubic-bezier(0.4, 0.0, 1, 1) forwards;
+  animation: swipeOutRight 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 .view-panel.swipe-in-left {
@@ -895,23 +894,23 @@ body {
 }
 
 @keyframes swipeOutLeft {
-  0% { transform: translateX(0) scale(1) rotateY(0deg); opacity: 1; filter: blur(0px); }
-  100% { transform: translateX(-120%) scale(0.9) rotateY(12deg); opacity: 0; filter: blur(8px); }
+  0% { transform: translateX(0); opacity: 1; filter: blur(0px); }
+  100% { transform: translateX(-100%); opacity: 0; filter: blur(6px); }
 }
 
 @keyframes swipeInRight {
-  0% { transform: translateX(120%) scale(0.9) rotateY(-12deg); opacity: 0; filter: blur(8px); }
-  100% { transform: translateX(0) scale(1) rotateY(0deg); opacity: 1; filter: blur(0px); }
+  0% { transform: translateX(100%); opacity: 0; filter: blur(6px); }
+  100% { transform: translateX(0); opacity: 1; filter: blur(0px); }
 }
 
 @keyframes swipeOutRight {
-  0% { transform: translateX(0) scale(1) rotateY(0deg); opacity: 1; filter: blur(0px); }
-  100% { transform: translateX(120%) scale(0.9) rotateY(-12deg); opacity: 0; filter: blur(8px); }
+  0% { transform: translateX(0); opacity: 1; filter: blur(0px); }
+  100% { transform: translateX(100%); opacity: 0; filter: blur(6px); }
 }
 
 @keyframes swipeInLeft {
-  0% { transform: translateX(-120%) scale(0.9) rotateY(12deg); opacity: 0; filter: blur(8px); }
-  100% { transform: translateX(0) scale(1) rotateY(0deg); opacity: 1; filter: blur(0px); }
+  0% { transform: translateX(-100%); opacity: 0; filter: blur(6px); }
+  100% { transform: translateX(0); opacity: 1; filter: blur(0px); }
 }
 
 /* Game Card Base */
