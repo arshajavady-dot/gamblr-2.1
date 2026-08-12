@@ -190,6 +190,10 @@ class CoinFlipManager {
       if (this.stats.currentStreak > best) {
         this.stats.bestStreak = this.stats.currentStreak;
       }
+    } else {
+      this.stats.currentStreak = 0;
+    }
+
     this.stats.history.unshift(outcome);
     if (this.stats.history.length > 30) this.stats.history.pop();
 
