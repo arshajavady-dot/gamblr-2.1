@@ -302,14 +302,18 @@ class ProfileManager {
     });
   }
 
-  checkAchievements(gameType, stats) {
+  checkAchievements() {
     if (!this.profile.unlockedBadges) this.profile.unlockedBadges = {};
+
+    const coinStats = this.getGameStats('coin', {});
+    const slotsStats = this.getGameStats('slots', {});
+    const minesStats = this.getGameStats('mines', {});
 
     const BADGES = [
       { id: 'first_win', title: 'First Victory', icon: '🏆', check: () => (this.profile.xp || 0) >= 50 },
-      { id: 'coin_master', title: 'Coin Master', icon: '🪙', check: () => gameType === 'coin' && stats && stats.wins >= 5 },
-      { id: 'jackpot_king', title: 'Jackpot King', icon: '🎰', check: () => gameType === 'slots' && stats && stats.jackpots >= 1 },
-      { id: 'mine_sweeper', title: 'Mine Sweeper', icon: '💣', check: () => gameType === 'mines' && stats && stats.wins >= 3 },
+      { id: 'coin_master', title: 'Coin Master', icon: '🪙', check: () => (Number(coinStats.wins) || 0) >= 5 },
+      { id: 'jackpot_king', title: 'Jackpot King', icon: '🎰', check: () => (Number(slotsStats.jackpots) || 0) >= 1 },
+      { id: 'mine_sweeper', title: 'Mine Sweeper', icon: '💣', check: () => (Number(minesStats.wins) || 0) >= 3 },
       { id: 'high_roller', title: 'High Roller', icon: '🚀', check: () => (this.profile.level || 1) >= 5 }
     ];
 
@@ -463,7 +467,7 @@ class ProfileManager {
 
     this.triggerWinEffect();
 
-    this.checkAchievements('xp', null);
+    this.checkAchievements();
     this.saveSession();
     this.updateHeaderUI();
 
@@ -799,6 +803,9 @@ class ProfileManager {
   openStatsModal() {
     const modal = document.getElementById('stats-modal');
     if (!modal) return;
+
+    // 0. Auto-eval achievements
+    this.checkAchievements();
 
     // 1. Calculate Level & XP
     const currentXP = this.profile.xp || 0;
