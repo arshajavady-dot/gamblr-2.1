@@ -308,13 +308,29 @@ class ProfileManager {
     const coinStats = this.getGameStats('coin', {});
     const slotsStats = this.getGameStats('slots', {});
     const minesStats = this.getGameStats('mines', {});
+    const eightballStats = this.getGameStats('8ball', {});
+    const rpsStats = this.getGameStats('rps', {});
+    const cardsStats = this.getGameStats('cards', {});
+    const plinkoStats = this.getGameStats('plinko', {});
+    const raceStats = this.getGameStats('race', {});
 
     const BADGES = [
-      { id: 'first_win', title: 'First Victory', icon: '🏆', check: () => (this.profile.xp || 0) >= 50 },
-      { id: 'coin_master', title: 'Coin Master', icon: '🪙', check: () => (Number(coinStats.wins) || 0) >= 5 },
-      { id: 'jackpot_king', title: 'Jackpot King', icon: '🎰', check: () => (Number(slotsStats.jackpots) || 0) >= 1 },
-      { id: 'mine_sweeper', title: 'Mine Sweeper', icon: '💣', check: () => (Number(minesStats.wins) || 0) >= 3 },
-      { id: 'high_roller', title: 'High Roller', icon: '🚀', check: () => (this.profile.level || 1) >= 5 }
+      { id: 'first_win', title: 'First Victory', desc: 'Earn 50 XP / Win any game', icon: '🏆', check: () => (this.profile.xp || 0) >= 50 },
+      { id: 'coin_master', title: 'Coin Master', desc: 'Win 5 Coin Flips', icon: '🪙', check: () => (Number(coinStats.wins) || 0) >= 5 },
+      { id: 'jackpot_king', title: 'Jackpot King', desc: 'Hit a Slot Machine Jackpot', icon: '🎰', check: () => (Number(slotsStats.jackpots) || 0) >= 1 },
+      { id: 'mine_sweeper', title: 'Mine Sweeper', desc: 'Cash out 3 Mines games', icon: '💣', check: () => (Number(minesStats.wins) || 0) >= 3 },
+      { id: 'high_roller', title: 'High Roller', desc: 'Reach Casino Level 5', icon: '🚀', check: () => (this.profile.level || 1) >= 5 },
+      // 10 NEW HARD / ELITE ACHIEVEMENTS
+      { id: 'coin_god', title: 'Coin Titan', desc: 'Win 50 Coin Flips total', icon: '👑', check: () => (Number(coinStats.wins) || 0) >= 50 },
+      { id: 'streak_legend', title: 'Streak Legend', desc: 'Achieve a 5-Win Streak on Coin Flip', icon: '🔥', check: () => (Number(coinStats.bestStreak) || 0) >= 5 },
+      { id: 'slot_addict', title: 'Slot Machine Addict', desc: 'Spin the Slot Machine 100 times', icon: '🍒', check: () => (Number(slotsStats.totalSpins) || 0) >= 100 },
+      { id: 'oracle_master', title: 'Oracle Whisperer', desc: 'Consult the Magic 8-Ball 25 times', icon: '🔮', check: () => (Number(eightballStats.total) || 0) >= 25 },
+      { id: 'rps_grandmaster', title: 'RPS Grandmaster', desc: 'Win 15 Rock Paper Scissors matches', icon: '✊', check: () => (Number(rpsStats.wins) || 0) >= 15 },
+      { id: 'card_shark', title: 'Card Shark', desc: 'Achieve a 5-Card Streak in Higher/Lower', icon: '🃏', check: () => (Number(cardsStats.bestStreak) || 0) >= 5 },
+      { id: 'mine_field_god', title: 'Minefield Demolisher', desc: 'Win 10 Cyber Mines cashouts', icon: '💥', check: () => (Number(minesStats.wins) || 0) >= 10 },
+      { id: 'plinko_rainmaker', title: 'Plinko Rainmaker', desc: 'Drop 50 Plinko balls on the board', icon: '🔵', check: () => (Number(plinkoStats.totalDrops) || 0) >= 50 },
+      { id: 'derby_champion', title: 'Derby Champion', desc: 'Win 10 Animal Races', icon: '🏇', check: () => (Number(raceStats.wins) || 0) >= 10 },
+      { id: 'casino_tycoon', title: 'Casino Tycoon', desc: 'Reach Level 10 or 2,500 Total XP', icon: '💎', check: () => (this.profile.level || 1) >= 10 || (this.profile.xp || 0) >= 2500 }
     ];
 
     BADGES.forEach(b => {
@@ -900,12 +916,32 @@ class ProfileManager {
     if (elBreakdown) elBreakdown.innerHTML = breakdownHTML;
 
     // 3. Render Achievements Grid
+    const coinStats = this.getGameStats('coin', {});
+    const slotsStats = this.getGameStats('slots', {});
+    const minesStats = this.getGameStats('mines', {});
+    const eightballStats = this.getGameStats('8ball', {});
+    const rpsStats = this.getGameStats('rps', {});
+    const cardsStats = this.getGameStats('cards', {});
+    const plinkoStats = this.getGameStats('plinko', {});
+    const raceStats = this.getGameStats('race', {});
+
     const BADGES = [
-      { id: 'first_win', title: 'First Victory', desc: 'Earn 50 XP / Win any game', icon: '🏆' },
-      { id: 'coin_master', title: 'Coin Master', desc: 'Win 5 Coin Flips', icon: '🪙' },
-      { id: 'jackpot_king', title: 'Jackpot King', desc: 'Hit a Slot Machine Jackpot', icon: '🎰' },
-      { id: 'mine_sweeper', title: 'Mine Sweeper', desc: 'Cash out 3 Mines games', icon: '💣' },
-      { id: 'high_roller', title: 'High Roller', desc: 'Reach Casino Level 5', icon: '🚀' }
+      { id: 'first_win', title: 'First Victory', desc: 'Earn 50 XP / Win any game', icon: '🏆', check: () => (this.profile.xp || 0) >= 50 },
+      { id: 'coin_master', title: 'Coin Master', desc: 'Win 5 Coin Flips', icon: '🪙', check: () => (Number(coinStats.wins) || 0) >= 5 },
+      { id: 'jackpot_king', title: 'Jackpot King', desc: 'Hit a Slot Machine Jackpot', icon: '🎰', check: () => (Number(slotsStats.jackpots) || 0) >= 1 },
+      { id: 'mine_sweeper', title: 'Mine Sweeper', desc: 'Cash out 3 Mines games', icon: '💣', check: () => (Number(minesStats.wins) || 0) >= 3 },
+      { id: 'high_roller', title: 'High Roller', desc: 'Reach Casino Level 5', icon: '🚀', check: () => (this.profile.level || 1) >= 5 },
+      // 10 NEW HARD / ELITE ACHIEVEMENTS
+      { id: 'coin_god', title: 'Coin Titan', desc: 'Win 50 Coin Flips total', icon: '👑', check: () => (Number(coinStats.wins) || 0) >= 50 },
+      { id: 'streak_legend', title: 'Streak Legend', desc: 'Achieve a 5-Win Streak on Coin Flip', icon: '🔥', check: () => (Number(coinStats.bestStreak) || 0) >= 5 },
+      { id: 'slot_addict', title: 'Slot Machine Addict', desc: 'Spin the Slot Machine 100 times', icon: '🍒', check: () => (Number(slotsStats.totalSpins) || 0) >= 100 },
+      { id: 'oracle_master', title: 'Oracle Whisperer', desc: 'Consult the Magic 8-Ball 25 times', icon: '🔮', check: () => (Number(eightballStats.total) || 0) >= 25 },
+      { id: 'rps_grandmaster', title: 'RPS Grandmaster', desc: 'Win 15 Rock Paper Scissors matches', icon: '✊', check: () => (Number(rpsStats.wins) || 0) >= 15 },
+      { id: 'card_shark', title: 'Card Shark', desc: 'Achieve a 5-Card Streak in Higher/Lower', icon: '🃏', check: () => (Number(cardsStats.bestStreak) || 0) >= 5 },
+      { id: 'mine_field_god', title: 'Minefield Demolisher', desc: 'Win 10 Cyber Mines cashouts', icon: '💥', check: () => (Number(minesStats.wins) || 0) >= 10 },
+      { id: 'plinko_rainmaker', title: 'Plinko Rainmaker', desc: 'Drop 50 Plinko balls on the board', icon: '🔵', check: () => (Number(plinkoStats.totalDrops) || 0) >= 50 },
+      { id: 'derby_champion', title: 'Derby Champion', desc: 'Win 10 Animal Races', icon: '🏇', check: () => (Number(raceStats.wins) || 0) >= 10 },
+      { id: 'casino_tycoon', title: 'Casino Tycoon', desc: 'Reach Level 10 or 2,500 Total XP', icon: '💎', check: () => (this.profile.level || 1) >= 10 || (this.profile.xp || 0) >= 2500 }
     ];
 
     if (!this.profile.unlockedBadges) this.profile.unlockedBadges = {};
