@@ -892,6 +892,44 @@ class ProfileManager {
     if (elWinPct) elWinPct.textContent = `${overallPct}%`;
     if (elBreakdown) elBreakdown.innerHTML = breakdownHTML;
 
+    // 3. Render Achievements Grid
+    const BADGES = [
+      { id: 'first_win', title: 'First Victory', desc: 'Earn 50 XP / Win any game', icon: '🏆' },
+      { id: 'coin_master', title: 'Coin Master', desc: 'Win 5 Coin Flips', icon: '🪙' },
+      { id: 'jackpot_king', title: 'Jackpot King', desc: 'Hit a Slot Machine Jackpot', icon: '🎰' },
+      { id: 'mine_sweeper', title: 'Mine Sweeper', desc: 'Cash out 3 Mines games', icon: '💣' },
+      { id: 'high_roller', title: 'High Roller', desc: 'Reach Casino Level 5', icon: '🚀' }
+    ];
+
+    if (!this.profile.unlockedBadges) this.profile.unlockedBadges = {};
+
+    let unlockedCount = 0;
+    let achievementsHTML = '';
+
+    BADGES.forEach(b => {
+      const isUnlocked = !!this.profile.unlockedBadges[b.id];
+      if (isUnlocked) unlockedCount++;
+
+      achievementsHTML += `
+        <div class="modal-badge-card ${isUnlocked ? 'unlocked' : 'locked'}">
+          <div class="badge-card-icon">${b.icon}</div>
+          <div class="badge-card-info">
+            <h5 class="badge-card-title">${b.title}</h5>
+            <p class="badge-card-desc">${b.desc}</p>
+          </div>
+          <span class="badge-status-tag ${isUnlocked ? 'tag-unlocked' : 'tag-locked'}">
+            ${isUnlocked ? '✓ UNLOCKED' : '🔒 LOCKED'}
+          </span>
+        </div>
+      `;
+    });
+
+    const elBadgeCount = document.getElementById('unlocked-badge-count');
+    const elGrid = document.getElementById('modal-achievements-grid');
+
+    if (elBadgeCount) elBadgeCount.textContent = `${unlockedCount}/${BADGES.length}`;
+    if (elGrid) elGrid.innerHTML = achievementsHTML;
+
     modal.classList.remove('hidden');
   }
 

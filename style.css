@@ -885,6 +885,94 @@ body {
   color: var(--text-main);
 }
 
+.achievements-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.achievements-section h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.modal-achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.modal-badge-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  transition: all 0.2s ease;
+}
+
+.modal-badge-card.unlocked {
+  border-color: rgba(255, 215, 0, 0.4);
+  background: rgba(255, 215, 0, 0.06);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.15);
+}
+
+.modal-badge-card.locked {
+  opacity: 0.55;
+  filter: grayscale(0.8);
+}
+
+.badge-card-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.badge-card-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 2px;
+}
+
+.badge-card-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.badge-card-desc {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.badge-status-tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.tag-unlocked {
+  background: rgba(0, 255, 157, 0.15);
+  border: 1px solid var(--accent-green);
+  color: var(--accent-green);
+}
+
+.tag-locked {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+}
+
 /* Modal Overlay & Cyber Card */
 .modal-overlay {
   position: fixed;
@@ -2076,7 +2164,8 @@ body {
 .segment-tags-container::-webkit-scrollbar,
 .history-list::-webkit-scrollbar,
 .modal-body::-webkit-scrollbar,
-.game-breakdown-list::-webkit-scrollbar {
+.game-breakdown-list::-webkit-scrollbar,
+.modal-achievements-grid::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
@@ -2086,7 +2175,8 @@ body {
 .segment-tags-container::-webkit-scrollbar-track,
 .history-list::-webkit-scrollbar-track,
 .modal-body::-webkit-scrollbar-track,
-.game-breakdown-list::-webkit-scrollbar-track {
+.game-breakdown-list::-webkit-scrollbar-track,
+.modal-achievements-grid::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.4);
   border-radius: 999px;
   border: 1px solid rgba(255, 215, 0, 0.15);
@@ -2097,7 +2187,8 @@ body {
 .segment-tags-container::-webkit-scrollbar-thumb,
 .history-list::-webkit-scrollbar-thumb,
 .modal-body::-webkit-scrollbar-thumb,
-.game-breakdown-list::-webkit-scrollbar-thumb {
+.game-breakdown-list::-webkit-scrollbar-thumb,
+.modal-achievements-grid::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, var(--accent-gold), #ff9e00);
   border-radius: 999px;
   border: 1px solid #07090e;
@@ -2109,7 +2200,8 @@ body {
 .segment-tags-container::-webkit-scrollbar-thumb:hover,
 .history-list::-webkit-scrollbar-thumb:hover,
 .modal-body::-webkit-scrollbar-thumb:hover,
-.game-breakdown-list::-webkit-scrollbar-thumb:hover {
+.game-breakdown-list::-webkit-scrollbar-thumb:hover,
+.modal-achievements-grid::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #ffe066, var(--accent-gold));
   box-shadow: 0 0 16px var(--accent-gold-glow);
 }
@@ -2119,7 +2211,8 @@ body {
 .segment-tags-container::-webkit-scrollbar-button,
 .history-list::-webkit-scrollbar-button,
 .modal-body::-webkit-scrollbar-button,
-.game-breakdown-list::-webkit-scrollbar-button {
+.game-breakdown-list::-webkit-scrollbar-button,
+.modal-achievements-grid::-webkit-scrollbar-button {
   display: none !important;
 }
 
