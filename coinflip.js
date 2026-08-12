@@ -179,14 +179,15 @@ class CoinFlipManager {
   processResult(outcome) {
     const isWin = outcome === this.userPick;
 
-    this.stats.totalFlips++;
-    if (outcome === 'heads') this.stats.heads++;
-    else this.stats.tails++;
+    this.stats.totalFlips = (Number(this.stats.totalFlips) || 0) + 1;
+    if (outcome === 'heads') this.stats.heads = (Number(this.stats.heads) || 0) + 1;
+    else this.stats.tails = (Number(this.stats.tails) || 0) + 1;
 
     if (isWin) {
-      this.stats.wins++;
-      this.stats.currentStreak++;
-      if (this.stats.currentStreak > this.stats.bestStreak) {
+      this.stats.wins = (Number(this.stats.wins) || 0) + 1;
+      this.stats.currentStreak = (Number(this.stats.currentStreak) || 0) + 1;
+      const best = Number(this.stats.bestStreak) || 0;
+      if (this.stats.currentStreak > best) {
         this.stats.bestStreak = this.stats.currentStreak;
       }
       if (window.soundEngine) window.soundEngine.playWheelWin();
@@ -290,16 +291,26 @@ class CoinFlipManager {
       history: []
     };
 
+    let loaded = null;
     if (window.profileManager) {
-      this.stats = window.profileManager.getGameStats('coin', defaultStats);
+      loaded = window.profileManager.getGameStats('coin', defaultStats);
     } else {
       const saved = localStorage.getItem('gamblr_coin_stats');
       if (saved) {
         try {
-          this.stats = Object.assign(defaultStats, JSON.parse(saved));
+          loaded = JSON.parse(saved);
         } catch (e) {}
       }
     }
+
+    this.stats = Object.assign({}, defaultStats, loaded || {});
+    this.stats.totalFlips = Number(this.stats.totalFlips) || 0;
+    this.stats.heads = Number(this.stats.heads) || 0;
+    this.stats.tails = Number(this.stats.tails) || 0;
+    this.stats.wins = Number(this.stats.wins) || 0;
+    this.stats.currentStreak = Number(this.stats.currentStreak) || 0;
+    this.stats.bestStreak = Number(this.stats.bestStreak) || 0;
+    if (!Array.isArray(this.stats.history)) this.stats.history = [];
   }
 
   resetStats() {

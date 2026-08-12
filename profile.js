@@ -261,13 +261,14 @@ class ProfileManager {
     const userKey = this.profile.isLoggedIn ? this.profile.username.toLowerCase() : 'guest';
     if (this.profile.isLoggedIn) {
       const db = this.getAccountsDB();
-      if (db[userKey]) {
-        if (!db[userKey].stats) db[userKey].stats = {};
-        db[userKey].stats[gameKey] = statsObj;
-        this.saveAccountsDB(db);
-        // Async Cloud Sync
-        this.syncStatsToCloud(userKey, gameKey, statsObj);
+      if (!db[userKey]) {
+        db[userKey] = { username: this.profile.username, stats: {} };
       }
+      if (!db[userKey].stats) db[userKey].stats = {};
+      db[userKey].stats[gameKey] = statsObj;
+      this.saveAccountsDB(db);
+      // Async Cloud Sync
+      this.syncStatsToCloud(userKey, gameKey, statsObj);
     } else {
       try {
         localStorage.setItem(`gamblr_guest_stats_${gameKey}`, JSON.stringify(statsObj));
