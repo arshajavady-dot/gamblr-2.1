@@ -190,18 +190,19 @@ class CoinFlipManager {
       if (this.stats.currentStreak > best) {
         this.stats.bestStreak = this.stats.currentStreak;
       }
-      if (window.soundEngine) window.soundEngine.playWheelWin();
-      if (window.profileManager) window.profileManager.addXP(50, window.innerWidth / 2, window.innerHeight / 2);
-    } else {
-      this.stats.currentStreak = 0;
-      if (window.profileManager) window.profileManager.triggerLoseEffect();
-    }
-
     this.stats.history.unshift(outcome);
     if (this.stats.history.length > 30) this.stats.history.pop();
 
+    // MUST save stats FIRST before addXP triggers notifyAccountChange()
     this.saveStats();
     this.updateStatsUI();
+
+    if (isWin) {
+      if (window.soundEngine) window.soundEngine.playWheelWin();
+      if (window.profileManager) window.profileManager.addXP(50, window.innerWidth / 2, window.innerHeight / 2);
+    } else {
+      if (window.profileManager) window.profileManager.triggerLoseEffect();
+    }
 
     const resultText = document.getElementById('coin-result-text');
     const matchText = document.getElementById('coin-prediction-match');
@@ -229,6 +230,7 @@ class CoinFlipManager {
 
   updateStatsUI() {
     const elTotal = document.getElementById('stat-total-flips');
+    const elWins = document.getElementById('stat-wins-count');
     const elWinRate = document.getElementById('stat-win-rate');
     const elHeads = document.getElementById('stat-heads-count');
     const elTails = document.getElementById('stat-tails-count');
@@ -241,6 +243,7 @@ class CoinFlipManager {
     const historyList = document.getElementById('coin-history-list');
 
     if (elTotal) elTotal.textContent = this.stats.totalFlips;
+    if (elWins) elWins.textContent = this.stats.wins;
     if (elHeads) elHeads.textContent = this.stats.heads;
     if (elTails) elTails.textContent = this.stats.tails;
     if (elCurrentStreak) elCurrentStreak.textContent = this.stats.currentStreak;
